@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>JC ELITE | Cloud Pro</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg: #04070d; --surface: #0f172a; --accent: #3b82f6;
+            --orange: #f97316; --green: #10b981; --red: #ef4444;
+            --text: #f8fafc; --border: rgba(255, 255, 255, 0.08);
+        }
+        * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+        /* HEADER & LOGO */
+        .header { background: #000; padding: 15px; text-align: center; border-bottom: 1px solid var(--border); }
+        .logo-small { 
+            background: linear-gradient(135deg, var(--accent), var(--orange));
+            width: 40px; height: 40px; border-radius: 10px; display: inline-flex;
+            align-items: center; justify-content: center; font-weight: 800; color: white; margin-right: 10px;
+        }
+
+        /* NAVEGACIÓN INFERIOR (MÓVIL) */
+        nav { 
+            background: #000; display: flex; justify-content: space-around; 
+            padding: 12px; border-top: 1px solid var(--border); position: fixed; bottom: 0; width: 100%; 
+        }
+        .btn-nav { background: none; border: none; color: #666; font-size: 11px; font-weight: 800; cursor: pointer; text-transform: uppercase; }
+        .btn-nav.active { color: var(--accent); }
+
+        main { flex: 1; padding: 15px; overflow-y: auto; padding-bottom: 90px; }
+
+        /* TARJETAS */
+        .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .card-mini { background: var(--surface); padding: 15px; border-radius: 12px; border: 1px solid var(--border); }
+        
+        .search-bar { width: 100%; padding: 12px; background: #000; border: 1px solid var(--accent); border-radius: 10px; color: white; margin-bottom: 15px; }
+
+        .client-box { 
+            background: var(--surface); padding: 15px; border-radius: 15px; margin-bottom: 12px; 
+            border-left: 8px solid var(--accent); display: flex; justify-content: space-between; align-items: center;
+        }
+        .mora { border-left-color: var(--red); background: rgba(239, 68, 68, 0.08); }
+        
+        .btn-cuota { 
+            width: 42px; height: 42px; margin: 2px; border-radius: 8px; border: 1px solid #333; 
+            background: #000; color: white; font-weight: 800; cursor: pointer;
+        }
+        .pago-ok { background: var(--green); color: black; border-color: var(--green); }
+
+        /* FORMULARIO */
+        input { width: 100%; padding: 14px; margin: 10px 0; background: #000; border: 1px solid #333; color: white; border-radius: 10px; }
+        .btn-add { width: 100%; padding: 16px; background: var(--orange); border: none; color: white; font-weight: 800; border-radius: 12px; cursor: pointer; }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="logo-small">JC</div>
+    <span style="font-weight: 800; letter-spacing: 1px;">JC ELITE CLOUD</span>
+</div>
+
+<main>
+    <div class="kpi-grid">
+        <div class="card-mini"><small style="color:var(--accent)">EN CALLE</small><div id="k-calle" style="font-size:18px; font-weight:800">$ 0</div></div>
+        <div class="card-mini"><small style="color:var(--green)">CAJA</small><div id="k-caja" style="font-size:18px; font-weight:800">$ 0</div></div>
+    </div>
+
+    <div id="pantalla-list">
+        <input type="text" id="buscador" onkeyup="buscar()" class="search-bar" placeholder="🔍 Buscar cliente...">
+        <div id="lista-clientes">Conectando con la nube...</div>
+    </div>
+
+    <div id="pantalla-reg" class="hidden">
+        <div class="card-mini">
+            <h2 style="margin:0 0 15px">Nuevo Crédito</h2>
+            <input type="text" id="nom" placeholder="Nombre del cliente">
+            <input type="number" id="mon" placeholder="Monto a prestar">
+            <button class="btn-add" onclick="guardar()">SUBIR A LA NUBE</button>
+        </div>
+    </div>
+
+    <div id="pantalla-boss" class="hidden">
+        <div class="card-mini" style="height: 300px;">
+            <canvas id="graficaJefe"></canvas>
+        </div>
+        <button onclick="exportarBackup()" style="margin-top:20px; background:none; border:1px solid #333; color:gray; width:100%; padding:10px; border-radius:10px">Descargar Backup (JSON)</button>
+    </div>
+</main>
+
+<nav>
+    <button class="btn-nav active" onclick="ver('list')">COBROS</button>
+    <button class="btn-nav" onclick="ver('reg')">NUEVO</button>
+    <button class="btn-nav" onclick="ver('boss')">REPORTES</button>
+</nav>
+
+<script>
+    // --- CONFIGURACIÓN DE FIREBASE ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyCRNI3MwglHZfmCyRTv3xrxnuOe73yafNU",
+        authDomain: "jc-elite.firebaseapp.com",
+        databaseURL: "https://jc-elite-default-rtdb.firebaseio.com",
+        projectId: "jc-elite",
+        storageBucket: "jc-elite.firebasestorage.app",
+        messagingSenderId: "183298625822",
+        appId: "1:183298625822:web:f7f0a7087600cffbb8b90f",
+        measurementId: "G-J7RFJ6T7QF"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    let localDB = {};
+
+    // --- SINCRONIZACIÓN EN TIEMPO REAL ---
+    database.ref('clientes').on('value', (snapshot) => {
+        localDB = snapshot.val() || {};
+        renderizar();
+    });
+
+    function guardar() {
+        const n = document.getElementById('nom').value;
+        const m = parseFloat(document.getElementById('mon').value);
+        if(!n || !m) return alert("Completa los datos");
+
+        const id = Date.now();
+        const t = m * 1.20;
+        const nuevo = {
+            id: id, nom: n, base: m, total: t, cuota: t/4,
+            pagos: [false, false, false, false], fecha: id
+        };
+
+        database.ref('clientes/' + id).set(nuevo);
+        document.getElementById('nom').value = "";
+        document.getElementById('mon').value = "";
+        ver('list');
+    }
+
+    function togglePago(cid, idx, actual) {
+        database.ref('clientes/' + cid + '/pagos/' + idx).set(!actual);
+    }
+
+    function renderizar() {
+        const cont = document.getElementById('lista-clientes');
+        cont.innerHTML = "";
+        let calle = 0, caja = 0;
+        const unMes = 30 * 24 * 60 * 60 * 1000;
+
+        const lista = Object.values(localDB).sort((a,b) => b.id - a.id);
+
+        lista.forEach(p => {
+            const nP = p.pagos ? p.pagos.filter(x => x).length : 0;
+            const saldo = p.total - (nP * p.cuota);
+            const mora = (Date.now() - p.fecha > unMes && saldo > 0) || (nP === 0 && saldo > 0);
+            
+            caja += (nP * p.cuota);
+            calle += saldo;
+
+            cont.innerHTML += `
+                <div class="client-box ${mora ? 'mora' : ''}">
+                    <div>
+                        <b style="font-size:17px">${p.nom}</b><br>
+                        <small style="color:var(--orange)">Cuota: ${f(p.cuota)}</small>
+                        <div style="margin-top:8px">
+                            ${[0,1,2,3].map(i => `
+                                <button class="btn-cuota ${p.pagos && p.pagos[i] ? 'pago-ok' : ''}" 
+                                onclick="togglePago(${p.id}, ${i}, ${p.pagos?p.pagos[i]:false})">${i+1}</button>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div style="text-align:right">
+                        <div style="font-size:20px; font-weight:800; ${mora?'color:var(--red)':''}">${f(saldo)}</div>
+                        <button onclick="eliminar(${p.id})" style="border:none; background:none; color:#444; margin-top:10px">Eliminar</button>
+                    </div>
+                </div>
+            `;
+        });
+        document.getElementById('k-calle').innerText = f(calle);
+        document.getElementById('k-caja').innerText = f(caja);
+    }
+
+    const f = (n) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n);
+
+    function eliminar(id) { if(confirm('¿Borrar crédito?')) database.ref('clientes/' + id).remove(); }
+
+    function ver(id) {
+        document.getElementById('pantalla-list').classList.add('hidden');
+        document.getElementById('pantalla-reg').classList.add('hidden');
+        document.getElementById('pantalla-boss').classList.add('hidden');
+        document.getElementById('pantalla-' + id).classList.remove('hidden');
+        document.querySelectorAll('.btn-nav').forEach(b => b.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+        if(id === 'boss') renderGrafica();
+    }
+
+    function buscar() {
+        let txt = document.getElementById('buscador').value.toUpperCase();
+        let cards = document.getElementsByClassName('client-box');
+        for (let i = 0; i < cards.length; i++) {
+            cards[i].style.display = cards[i].innerText.toUpperCase().includes(txt) ? "" : "none";
+        }
+    }
+
+    let miChart = null;
+    function renderGrafica() {
+        let caja = 0, calle = 0;
+        Object.values(localDB).forEach(p => {
+            let nP = p.pagos ? p.pagos.filter(x => x).length : 0;
+            caja += nP * p.cuota;
+            calle += (p.total - (nP * p.cuota));
+        });
+        const ctx = document.getElementById('graficaJefe').getContext('2d');
+        if(miChart) miChart.destroy();
+        miChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Caja', 'Calle'],
+                datasets: [{ data: [caja, calle], backgroundColor: ['#10b981', '#3b82f6'], borderWidth: 0 }]
+            },
+            options: { maintainAspectRatio: false }
+        });
+    }
+
+    function exportarBackup() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(localDB));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", "backup_jcelite.json");
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+    }
+</script>
+</body>
+</html>
