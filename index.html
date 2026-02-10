@@ -3,109 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>JC ELITE</title>
-
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="JC ELITE">
-    <meta name="theme-color" content="#010204">
-    
-    <link rel="apple-touch-icon" href="https://i.imgur.com/TuUfP9j.png">
-    <link rel="icon" href="https://i.imgur.com/TuUfP9j.png">
-    <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22JC%20ELITE%22,%22short_name%22:%22JC%20ELITE%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23010204%22,%22theme_color%22:%22%23d4af37%22,%22icons%22:[{%22src%22:%22https://i.imgur.com/TuUfP9j.png%22,%22sizes%22:%22192x192%22,%22type%22:%22image/png%22},{%22src%22:%22https://i.imgur.com/TuUfP9j.png%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22}]}">
+    <title>JC ELITE V130 - SISTEMA PROFESIONAL</title>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;400;600;800&family=Syncopate:wght@700&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Syncopate:wght@700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <style>
         :root {
             --bg: #010204; --surface: #0a0b14; --card: #12141d; --gold: #d4af37;
             --gold-glow: rgba(212, 175, 55, 0.4); --text: #ffffff; --text-dim: #6b7280;
-            --success: #00ffa3; --danger: #ff3131; --warning: #ffb800; --blue: #3182ff;
+            --success: #00ffa3; --danger: #ff3131; --warning: #ffb800;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: var(--text); overflow-x: hidden; min-height: 100vh; padding-bottom: 120px; }
 
+        /* HEADER */
         .master-header {
-            position: sticky; top: 0; z-index: 9999; height: 130px;
-            background: rgba(1, 2, 4, 0.98); backdrop-filter: blur(25px);
+            position: sticky; top: 0; z-index: 9999; height: 100px;
+            background: rgba(1, 2, 4, 0.95); backdrop-filter: blur(20px);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             border-bottom: 1px solid var(--gold-glow);
         }
-        .jc-logo { font-family: 'Syncopate', sans-serif; font-size: 42px; font-weight: 700; color: var(--gold); letter-spacing: 12px; text-shadow: 0 4px 10px rgba(0,0,0,0.5); line-height: 1; margin-bottom: 8px; }
-        .jc-status { font-size: 9px; font-weight: 800; color: var(--text-dim); letter-spacing: 6px; text-transform: uppercase; }
-
+        .jc-logo { font-family: 'Syncopate', sans-serif; font-size: 26px; color: var(--gold); letter-spacing: 8px; }
         .auth-zone { position: absolute; right: 15px; top: 15px; }
-        .token-field { background: #000; border: 1px solid var(--gold); border-radius: 8px; color: var(--gold); width: 75px; padding: 10px; text-align: center; font-family: 'JetBrains Mono'; font-size: 11px; }
+        .token-field { background: #000; border: 1px solid var(--gold); border-radius: 8px; color: var(--gold); width: 65px; padding: 6px; text-align: center; font-size: 11px; font-weight: 800; }
 
-        .day-scroller { background: var(--bg); padding: 15px 0; display: flex; gap: 10px; overflow-x: auto; padding-left: 20px; }
+        /* NAVEGACIÓN DÍAS */
+        .day-scroller { background: var(--bg); padding: 15px 0; display: flex; gap: 8px; overflow-x: auto; padding-left: 15px; }
         .day-scroller::-webkit-scrollbar { display: none; }
-        .day-btn { flex: 0 0 auto; padding: 12px 22px; border-radius: 15px; background: var(--card); border: 1px solid rgba(255,255,255,0.05); color: var(--text-dim); font-size: 11px; font-weight: 800; text-transform: uppercase; }
-        .day-btn.active { background: var(--gold); color: #000; box-shadow: 0 5px 15px var(--gold-glow); }
+        .day-btn { flex: 0 0 auto; padding: 14px 20px; border-radius: 14px; background: var(--card); border: 1px solid rgba(255,255,255,0.05); color: var(--text-dim); font-size: 11px; font-weight: 800; text-transform: uppercase; transition: 0.3s; }
+        .day-btn.active { background: var(--gold); color: #000; border-color: var(--gold); box-shadow: 0 4px 15px var(--gold-glow); }
 
-        .stats-grid { padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .stat-box { background: var(--surface); padding: 20px; border-radius: 25px; border: 1px solid rgba(255,255,255,0.05); position: relative; overflow: hidden; }
-        .stat-box.full { grid-column: span 2; border-color: var(--gold-glow); }
-        .stat-box label { display: block; font-size: 9px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; }
-        .stat-box .val { font-size: 24px; font-weight: 800; }
-        .stat-box i { position: absolute; right: -10px; bottom: -10px; font-size: 60px; opacity: 0.05; color: #fff; }
+        /* CONTENEDORES DE VISTA */
+        .view-pane { display: none; padding: 0 15px; }
+        .view-pane.active { display: block; animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .main-container { padding: 0 20px; }
-        .item-card { display: flex; justify-content: space-between; align-items: center; padding: 25px 0; border-bottom: 1px solid rgba(255,255,255,0.04); transition: 0.3s; }
-        .item-card.completed { opacity: 0.25; filter: grayscale(1); }
-        .item-card.alert { border-left: 4px solid var(--danger); padding-left: 15px; }
-        .item-info h3 { font-size: 20px; font-weight: 700; color: #fff; }
-        .item-info p { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
-        .item-val { text-align: right; }
-        .item-val .money { font-size: 22px; font-weight: 800; color: var(--gold); }
+        /* TARJETAS DE ESTADÍSTICAS */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 15px 0; }
+        .stat-card { background: var(--surface); padding: 18px; border-radius: 22px; border: 1px solid rgba(255,255,255,0.05); }
+        .stat-card.full { grid-column: span 2; border-color: var(--gold-glow); }
+        .stat-card label { display: block; font-size: 9px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; letter-spacing: 1px; }
+        .stat-card .val { font-size: 20px; font-weight: 800; color: #fff; }
 
-        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 10000; display: none; align-items: flex-end; }
-        .sheet { background: var(--surface); width: 100%; border-radius: 40px 40px 0 0; padding: 35px 25px; border-top: 3px solid var(--gold); max-height: 95vh; overflow-y: auto; }
-        .sheet-title { font-family: 'Syncopate'; font-size: 20px; color: var(--gold); margin-bottom: 25px; }
+        /* LISTA DE CLIENTES */
+        .item-card { background: var(--surface); padding: 20px; border-radius: 22px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.03); transition: 0.2s; }
+        .item-card:active { transform: scale(0.97); background: var(--card); }
+        .item-card.completed { border-left: 6px solid var(--success); opacity: 0.5; }
+        .item-info h3 { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+        .item-info p { font-size: 12px; color: var(--text-dim); }
+        .item-right { text-align: right; }
+        .item-right .price { font-size: 17px; font-weight: 800; color: var(--gold); display: block; }
+        .item-right .sub { font-size: 11px; color: var(--success); font-weight: 700; }
+
+        /* CIERRE DE CAJA */
+        .box-title { font-size: 12px; font-weight: 800; color: var(--gold); text-transform: uppercase; margin: 20px 0 10px 5px; letter-spacing: 1px; }
+        .cash-container { background: #000; border-radius: 28px; padding: 25px; border: 1px solid var(--gold-glow); }
+        .cash-row { display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 15px; }
+        .cash-row.total { border-top: 1px dashed rgba(212, 175, 55, 0.3); padding-top: 20px; margin-top: 10px; font-size: 24px; font-weight: 800; color: var(--success); }
+        .history-box { background: var(--surface); border-radius: 20px; padding: 10px 20px; border: 1px solid rgba(255,255,255,0.05); }
+        .history-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; }
+
+        /* INPUTS */
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; font-size: 10px; font-weight: 800; color: var(--gold); text-transform: uppercase; margin-bottom: 10px; margin-left: 5px; }
+        .input-group input, .input-group select { width: 100%; height: 65px; background: var(--surface); border: 1px solid rgba(255,255,255,0.1); border-radius: 18px; color: #fff; padding: 0 20px; font-size: 18px; font-weight: 700; outline: none; }
+        .input-group input:focus { border-color: var(--gold); }
         
-        .input-box { margin-bottom: 22px; }
-        .input-box label { display: block; font-size: 10px; font-weight: 800; color: var(--gold); text-transform: uppercase; margin-bottom: 10px; }
-        .input-box input, .input-box select { width: 100%; height: 75px; background: #000; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; color: #fff; padding: 0 25px; font-size: 26px; font-weight: 800; }
+        .btn-main { width: 100%; height: 70px; background: var(--gold); color: #000; border: none; border-radius: 22px; font-weight: 800; font-size: 16px; text-transform: uppercase; margin-top: 10px; box-shadow: 0 8px 20px rgba(0,0,0,0.4); }
 
-        .btn-action { width: 100%; height: 75px; background: var(--gold); border: none; border-radius: 22px; color: #000; font-weight: 800; font-size: 16px; text-transform: uppercase; margin-bottom: 12px; }
-        .btn-danger { width: 100%; height: 60px; background: rgba(255,49,49,0.1); border: 1px solid var(--danger); border-radius: 20px; color: var(--danger); font-weight: 800; margin-bottom: 12px; }
-        .btn-sec { width: 100%; height: 60px; background: transparent; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; color: var(--text-dim); font-weight: 600; }
-
-        .stats-table { width: 100%; margin-top: 20px; border-collapse: collapse; }
-        .stats-table th { text-align: left; font-size: 10px; color: var(--gold); padding: 10px; text-transform: uppercase; }
-        .stats-table td { padding: 15px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; }
-        .best-month { color: var(--success); font-weight: 800; }
-
-        .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 20px; background: var(--card); border-radius: 20px; margin-bottom: 10px; }
-        .setting-info h4 { font-size: 14px; color: #fff; }
-        .setting-info p { font-size: 11px; color: var(--text-dim); }
-
-        .dock { position: fixed; bottom: 25px; left: 5%; width: 90%; height: 85px; background: rgba(18, 20, 25, 0.98); backdrop-filter: blur(25px); border-radius: 35px; border: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-around; align-items: center; z-index: 9000; }
+        /* DOCK */
+        .dock { position: fixed; bottom: 20px; left: 5%; width: 90%; height: 85px; background: rgba(10, 11, 20, 0.96); backdrop-filter: blur(20px); border-radius: 35px; border: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-around; align-items: center; z-index: 9999; }
         .dock-tab { border: none; background: none; color: var(--text-dim); display: flex; flex-direction: column; align-items: center; gap: 5px; transition: 0.3s; }
         .dock-tab.active { color: var(--gold); transform: translateY(-5px); }
         .dock-tab i { font-size: 24px; }
-        .dock-tab span { font-size: 10px; font-weight: 800; text-transform: uppercase; }
+        .dock-tab span { font-size: 10px; font-weight: 800; }
+
+        /* MODALES */
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10001; display: none; align-items: flex-end; }
+        .sheet { background: var(--surface); width: 100%; border-radius: 40px 40px 0 0; padding: 40px 25px; border-top: 4px solid var(--gold); animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
         .boss-only { display: none !important; }
         .is-boss .boss-only { display: block !important; }
-        .view-pane { display: none; }
-        .view-pane.active { display: block; }
-
-        /* CIERRE DE CAJA CARD */
-        .cash-card { background: linear-gradient(135deg, #12141d, #010204); padding: 25px; border-radius: 30px; border: 1px solid var(--gold-glow); margin-top: 20px; text-align: center; }
-        .cash-val { font-size: 38px; font-weight: 800; color: var(--success); margin: 15px 0; }
     </style>
 </head>
 <body id="jc-app">
 
     <header class="master-header">
-        <div class="jc-logo">JC</div>
-        <div class="jc-status">Authority Elite V130</div>
+        <div class="jc-logo">JC ELITE</div>
         <div class="auth-zone"><input type="password" class="token-field" placeholder="TOKEN" onkeyup="checkBoss(this.value)"></div>
     </header>
 
@@ -120,97 +109,82 @@
     </nav>
 
     <main id="view-ruta" class="view-pane active">
-        <section class="stats-grid">
-            <div class="stat-box full boss-only"><label>Capital en Calle</label><span id="st-total" class="val" style="color:var(--gold);">$ 0</span><i class="fa-solid fa-vault"></i></div>
-            <div class="stat-box"><label>Cobro Hoy</label><span id="st-cobro" class="val" style="color:var(--success);">$ 0</span><i class="fa-solid fa-hand-holding-dollar"></i></div>
-            <div class="stat-box"><label>Gastos</label><span id="st-gastos" class="val" style="color:var(--danger);">$ 0</span><i class="fa-solid fa-money-bill-transfer"></i></div>
-        </section>
-        <div style="padding: 0 20px 15px;"><input type="text" id="search" class="day-btn" style="width:100%; text-align:left; padding-left:20px;" placeholder="Buscar cliente..." onkeyup="render()"></div>
-        <div id="render-list" class="main-container"></div>
+        <div class="stats-grid">
+            <div class="stat-card"><label>Cobrado Hoy</label><span id="st-cobro-hoy" class="val" style="color:var(--success)">$ 0</span></div>
+            <div class="stat-card"><label>Pendiente Ruta</label><span id="st-pend-hoy" class="val" style="color:var(--warning)">$ 0</span></div>
+        </div>
+        <div id="render-list"></div>
     </main>
 
-    <main id="view-cierre" class="view-pane" style="padding:30px;">
-        <h2 class="sheet-title">Cierre de Caja</h2>
-        <div class="cash-card">
-            <label style="font-size:10px; color:var(--gold); text-transform:uppercase;">Efectivo en Mano</label>
-            <div id="cash-hand" class="cash-val">$ 0</div>
-            <p style="font-size:11px; color:var(--text-dim);">Resultado de: Cobros - Gastos</p>
+    <main id="view-cierre" class="view-pane">
+        <div class="input-group boss-only" style="margin-top:20px;">
+            <label>Base Entregada al Cobrador ($)</label>
+            <input type="number" id="base-val" onchange="updateBase(this.value)">
         </div>
-        <div style="margin-top:25px;">
-            <button class="btn-action" onclick="cerrarCaja()">CERRAR CAJA DE HOY</button>
-            <p style="font-size:10px; color:var(--text-dim); text-align:center; margin-top:10px;">El cierre guardará el total neto en el historial y limpiará la vista de hoy.</p>
+
+        <div class="box-title">Calculadora de Efectivo Real</div>
+        <div class="cash-container">
+            <div class="cash-row"><span>(+) Base inicial:</span> <span id="cj-base" style="color:var(--success)">$ 0</span></div>
+            <div class="cash-row"><span>(+) Recaudos del día:</span> <span id="cj-recaudo" style="color:var(--success)">$ 0</span></div>
+            <div class="cash-row"><span>(-) Gastos:</span> <span id="cj-gastos" style="color:var(--danger)">$ 0</span></div>
+            <div class="cash-row"><span>(-) Préstamos nuevos:</span> <span id="cj-prestado" style="color:var(--danger)">$ 0</span></div>
+            <div class="cash-row total"><span>SALDO EN CAJA:</span> <span id="cj-final">$ 0</span></div>
         </div>
+
+        <div class="box-title">Detalle de Cobros de Hoy</div>
+        <div id="historial-cobros" class="history-box"></div>
     </main>
 
-    <main id="view-stats" class="view-pane" style="padding:30px;">
-        <h2 class="sheet-title">Rendimiento Histórico</h2>
-        <div class="stat-box full" style="margin-bottom:20px; background: linear-gradient(145deg, #0a0b14, #1a1e30);">
-            <label>Mejor Mes (Récord)</label>
-            <span id="best-month-label" class="val" style="color:var(--success);">---</span>
-        </div>
-        <table class="stats-table">
-            <thead><tr><th>Mes / Año</th><th>Recaudo Neto</th></tr></thead>
-            <tbody id="stats-body"></tbody>
-        </table>
-    </main>
-
-    <main id="view-gastos" class="view-pane" style="padding:30px;">
-        <h2 class="sheet-title" style="color:var(--danger);">Registro de Gasto</h2>
-        <div class="input-box"><label>Motivo del Gasto</label><input type="text" id="ex-desc"></div>
-        <div class="input-box"><label>Monto $</label><input type="number" id="ex-amt"></div>
-        <button class="btn-action" style="background:var(--danger); color:#fff;" onclick="saveGasto()">CONFIRMAR SALIDA</button>
-    </main>
-
-    <main id="view-admin" class="view-pane" style="padding:30px;">
-        <h2 class="sheet-title">Nuevo Préstamo</h2>
-        <div class="input-box"><label>Nombre del Cliente</label><input type="text" id="add-name"></div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
-            <div class="input-box"><label>Capital $</label><input type="number" id="add-cap"></div>
-            <div class="input-box"><label>Cuotas</label><input type="number" id="add-days" value="24"></div>
-        </div>
-        <div class="input-box"><label>Día de Cobro</label><select id="add-day"><option>Lunes</option><option>Martes</option><option>Miercoles</option><option>Jueves</option><option>Viernes</option><option>Sabado</option><option>Domingo</option></select></div>
-        <div class="input-box"><label>Zona / Barrio</label><input type="text" id="add-zone"></div>
-        <button class="btn-action" onclick="saveNew()">ACTIVAR CRÉDITO</button>
-    </main>
-
-    <main id="view-settings" class="view-pane" style="padding:30px;">
-        <h2 class="sheet-title">Ajustes Maestro</h2>
-        <div class="setting-row" onclick="exportData()" style="cursor:pointer;">
-            <div class="setting-info"><h4>Copia de Seguridad</h4><p>Descargar datos actuales</p></div>
-            <i class="fa-solid fa-download" style="color:var(--blue);"></i>
-        </div>
-        <div style="margin-top:40px;">
-            <button class="btn-danger" onclick="masterReset()">RESETEAR TODA LA RUTA (777)</button>
+    <main id="view-stats" class="view-pane boss-only">
+        <div class="stats-grid" style="margin-top:20px;">
+            <div class="stat-card full"><label>Capital Total en la Calle</label><span id="mst-calle" class="val" style="color:var(--gold); font-size:28px;">$ 0</span></div>
+            <div class="stat-card"><label>Inversión Neta</label><span id="mst-inv" class="val">$ 0</span></div>
+            <div class="stat-card"><label>Utilidad Proyectada</label><span id="mst-util" class="val" style="color:var(--success)">$ 0</span></div>
+            <div class="stat-card"><label>Clientes Activos</label><span id="mst-count" class="val">0</span></div>
+            <div class="stat-card"><label>Promedio Cuota</label><span id="mst-avg" class="val">$ 0</span></div>
         </div>
     </main>
 
-    <div class="overlay" id="modal-master">
+    <main id="view-gastos" class="view-pane">
+        <div class="input-group" style="margin-top:20px;"><label>Motivo del Gasto</label><input type="text" id="gs-desc" placeholder="Ej: Gasolina, Almuerzo"></div>
+        <div class="input-group"><label>Valor Pagado ($)</label><input type="number" id="gs-val"></div>
+        <button class="btn-main" style="background:var(--danger); color:#fff" onclick="addGasto()">Registrar Salida</button>
+    </main>
+
+    <main id="view-admin" class="view-pane">
+        <div class="input-group" style="margin-top:20px;"><label>Nombre Completo</label><input type="text" id="nw-name"></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <div class="input-group"><label>Capital $</label><input type="number" id="nw-cap"></div>
+            <div class="input-group"><label>% Interés</label><input type="number" id="nw-int" value="20"></div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <div class="input-group"><label>Días Plazo</label><input type="number" id="nw-days" value="24"></div>
+            <div class="input-group"><label>Día de Cobro</label>
+                <select id="nw-day">
+                    <option>Lunes</option><option>Martes</option><option>Miercoles</option>
+                    <option>Jueves</option><option>Viernes</option><option>Sabado</option><option>Domingo</option>
+                </select>
+            </div>
+        </div>
+        <div class="input-group"><label>Barrio / Ubicación</label><input type="text" id="nw-barrio"></div>
+        <button class="btn-main" onclick="addNew()">Entregar Dinero</button>
+    </main>
+
+    <div class="overlay" id="pop-pay">
         <div class="sheet">
-            <h2 id="m-name" class="sheet-title">---</h2>
-            <div style="display:flex; justify-content:space-between; margin-bottom:30px; background:rgba(255,255,255,0.03); padding:20px; border-radius:20px;">
-                <div><label style="font-size:9px;">PENDIENTE</label><span id="m-saldo" style="font-size:24px; font-weight:800; color:var(--gold);">$ 0</span></div>
-                <div style="text-align:right;"><label style="font-size:9px;">CUOTA</label><span id="m-cuota" style="font-size:24px; font-weight:800; color:var(--success);">$ 0</span></div>
-            </div>
-            <div class="input-box"><label>Valor a Cobrar</label><input type="number" id="m-input-pay"></div>
-            <button class="btn-action" onclick="executePay()">REGISTRAR ABONO</button>
-            <div class="boss-only">
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                    <button class="btn-danger" style="background:var(--success); color:#000; border:none;" onclick="renewC()">RENOVAR</button>
-                    <button class="btn-danger" onclick="deleteC()">ELIMINAR</button>
-                </div>
-            </div>
-            <button class="btn-sec" onclick="closeModal()">REGRESAR</button>
-            <div id="m-history" style="margin-top:25px; border-top:1px solid rgba(255,255,255,0.05); padding-top:20px;"></div>
+            <h2 id="pop-name" style="text-align:center; margin-bottom:25px; font-weight:800;">---</h2>
+            <div class="input-group"><label>Monto a cobrar</label><input type="number" id="pop-input"></div>
+            <button class="btn-main" onclick="confirmPay()">Confirmar Recaudo</button>
+            <button class="btn-main" style="background:transparent; color:var(--text-dim); margin-top:15px;" onclick="closePop()">Cancelar</button>
         </div>
     </div>
 
     <nav class="dock">
-        <button class="dock-tab active" onclick="tab('ruta', this)"><i class="fa-solid fa-house-fire"></i><span>Ruta</span></button>
-        <button class="dock-tab" onclick="tab('cierre', this)"><i class="fa-solid fa-vault"></i><span>Caja</span></button>
-        <button class="dock-tab" onclick="tab('stats', this)"><i class="fa-solid fa-chart-pie"></i><span>Stats</span></button>
-        <button class="dock-tab" onclick="tab('gastos', this)"><i class="fa-solid fa-receipt"></i><span>Gastos</span></button>
-        <button class="dock-tab boss-only" onclick="tab('admin', this)"><i class="fa-solid fa-user-plus"></i><span>Nuevo</span></button>
-        <button class="dock-tab boss-only" onclick="tab('settings', this)"><i class="fa-solid fa-sliders"></i><span>Ajustes</span></button>
+        <button class="dock-tab active" onclick="tab('ruta', this)"><i class="fa-solid fa-route"></i><span>Ruta</span></button>
+        <button class="dock-tab" onclick="tab('cierre', this)"><i class="fa-solid fa-cash-register"></i><span>Caja</span></button>
+        <button class="dock-tab boss-only" onclick="tab('stats', this)"><i class="fa-solid fa-chart-pie"></i><span>Stats</span></button>
+        <button class="dock-tab" onclick="tab('gastos', this)"><i class="fa-solid fa-wallet"></i><span>Gastos</span></button>
+        <button class="dock-tab boss-only" onclick="tab('admin', this)"><i class="fa-solid fa-circle-plus"></i><span>Nuevo</span></button>
     </nav>
 
     <script>
@@ -224,129 +198,158 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let selDay = "Lunes", isBoss = false, activeID = null, activeData = null, netCash = 0;
-        const cur = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(v);
+        let selDay = "Lunes", isBoss = false, actID = null, actSal = 0;
+        const fmt = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(v);
 
-        function checkBoss(v) { 
-            isBoss = (v.toUpperCase() === "JC7"); 
-            document.getElementById('jc-app').className = isBoss ? 'is-boss' : ''; 
-            render(); 
+        function checkBoss(v) {
+            isBoss = (v.toUpperCase() === "JC7");
+            document.body.classList.toggle('is-boss', isBoss);
+            render();
         }
 
-        function setDay(d, b) { 
-            selDay = d; 
-            document.querySelectorAll('.day-btn').forEach(x => x.classList.remove('active')); 
-            b.classList.add('active'); 
-            render(); 
+        function setDay(d, btn) {
+            selDay = d;
+            document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            render();
+        }
+
+        async function updateBase(v) {
+            const h = new Date().toISOString().split('T')[0];
+            await db.ref(`jc_v130/config/base/${h}`).set(parseFloat(v) || 0);
         }
 
         function render() {
             const h = new Date().toISOString().split('T')[0];
-            const q = document.getElementById('search').value.toLowerCase();
+            const list = document.getElementById('render-list');
+            const hist = document.getElementById('historial-cobros');
 
-            db.ref('jc_elite_v130').on('value', snap => {
+            db.ref('jc_v130').on('value', snap => {
                 const data = snap.val() || {};
                 const cls = data.clientes || {};
                 const gts = data.gastos || {};
-                const list = document.getElementById('render-list');
-                list.innerHTML = "";
-                
-                let reHoy = 0, gaHoy = 0, totalP = 0;
-                let statsMap = {};
+                const base = (data.config && data.config.base) ? (data.config.base[h] || 0) : 0;
+
+                let cHoy = 0, gHoy = 0, pHoy = 0, tCalle = 0, pRuta = 0;
+                let tInv = 0, tCount = 0;
+
+                list.innerHTML = ""; hist.innerHTML = "";
 
                 Object.values(cls).forEach(c => {
-                    if(c.saldo > 0) totalP += c.saldo;
-                    if(c.pagos) {
+                    if (c.saldo > 0) {
+                        tCalle += c.saldo;
+                        tInv += parseFloat(c.capital);
+                        tCount++;
+                    }
+
+                    // Historial y Cobros de hoy
+                    if (c.pagos) {
                         Object.values(c.pagos).forEach(p => {
-                            if(p.f === h) reHoy += p.m;
-                            let mes = p.f.substring(0, 7);
-                            statsMap[mes] = (statsMap[mes] || 0) + p.m;
+                            if (p.f === h) {
+                                cHoy += p.m;
+                                hist.innerHTML += `<div class="history-row"><span>${c.nombre}</span><span style="color:var(--success); font-weight:800">+ ${fmt(p.m)}</span></div>`;
+                            }
                         });
                     }
 
-                    if(c.saldo > 0 && c.dia === selDay && (c.nombre.toLowerCase().includes(q))) {
+                    // Préstamos nuevos de hoy
+                    if (c.f_crea === h) pHoy += parseFloat(c.capital);
+
+                    // Filtro de Ruta por Día
+                    if (c.saldo > 0 && c.dia === selDay) {
                         const done = (c.u_f === h);
-                        const card = document.createElement('div');
-                        card.className = `item-card ${done ? 'completed' : ''}`;
-                        card.onclick = () => openModal(c);
-                        card.innerHTML = `<div class="item-info"><h3>${c.nombre}</h3><p>📍 ${c.barrio}</p></div><div class="item-val"><span class="money">${cur(c.saldo)}</span></div>`;
-                        list.appendChild(card);
+                        if (!done) pRuta += c.cuota;
+
+                        const div = document.createElement('div');
+                        div.className = `item-card ${done ? 'completed' : ''}`;
+                        div.onclick = () => {
+                            actID = c.id; actSal = c.saldo;
+                            document.getElementById('pop-name').innerText = c.nombre;
+                            document.getElementById('pop-input').value = c.cuota;
+                            document.getElementById('pop-pay').style.display = "flex";
+                        };
+                        div.innerHTML = `
+                            <div class="item-info"><h3>${c.nombre}</h3><p><i class="fa-solid fa-location-dot"></i> ${c.barrio}</p></div>
+                            <div class="item-right"><span class="price">${fmt(c.saldo)}</span><span class="sub">Cuota: ${fmt(c.cuota)}</span></div>
+                        `;
+                        list.appendChild(div);
                     }
                 });
 
-                Object.values(gts).forEach(g => { if(g.f === h) gaHoy += g.m; });
-                netCash = reHoy - gaHoy;
-                document.getElementById('st-cobro').innerText = cur(reHoy);
-                document.getElementById('st-gastos').innerText = cur(gaHoy);
-                document.getElementById('st-total').innerText = cur(totalP);
-                document.getElementById('cash-hand').innerText = cur(netCash);
+                // Gastos
+                Object.values(gts).forEach(g => { if (g.f === h) gHoy += g.m; });
 
-                const sBody = document.getElementById('stats-body');
-                sBody.innerHTML = "";
-                Object.keys(statsMap).sort().reverse().forEach(m => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `<td>${m}</td><td>${cur(statsMap[m])}</td>`;
-                    sBody.appendChild(tr);
-                });
+                // UI Actualización
+                document.getElementById('st-cobro-hoy').innerText = fmt(cHoy);
+                document.getElementById('st-pend-hoy').innerText = fmt(pRuta);
+                
+                // Caja
+                document.getElementById('cj-base').innerText = fmt(base);
+                document.getElementById('cj-recaudo').innerText = fmt(cHoy);
+                document.getElementById('cj-gastos').innerText = fmt(gHoy);
+                document.getElementById('cj-prestado').innerText = fmt(pHoy);
+                document.getElementById('cj-final').innerText = fmt(base + cHoy - gHoy - pHoy);
+                document.getElementById('base-val').value = base;
+
+                // Stats Maestras
+                document.getElementById('mst-calle').innerText = fmt(tCalle);
+                document.getElementById('mst-inv').innerText = fmt(tInv);
+                document.getElementById('mst-util').innerText = fmt(tCalle - tInv);
+                document.getElementById('mst-count').innerText = tCount;
+                document.getElementById('mst-avg').innerText = fmt(tCount > 0 ? tCalle / tCount : 0);
+
+                if (hist.innerHTML === "") hist.innerHTML = "<p style='text-align:center; color:var(--text-dim); padding:10px; font-size:12px;'>No hay cobros hoy.</p>";
             });
         }
 
-        async function cerrarCaja() {
-            if(confirm(`¿Cerrar caja con ${cur(netCash)} en efectivo?`)) {
-                const h = new Date().toISOString().split('T')[0];
-                await db.ref('jc_elite_v130/cierres').push({ f: h, monto: netCash });
-                alert("CAJA CERRADA EXITOSAMENTE");
-            }
-        }
-
-        function openModal(c) {
-            activeID = c.id; activeData = c;
-            document.getElementById('m-name').innerText = c.nombre;
-            document.getElementById('m-saldo').innerText = cur(c.saldo);
-            document.getElementById('m-cuota').innerText = cur(c.cuotaVal);
-            document.getElementById('m-input-pay').value = Math.min(c.cuotaVal, c.saldo);
-            document.getElementById('modal-master').style.display = "flex";
-        }
-
-        function closeModal() { document.getElementById('modal-master').style.display = "none"; }
-
-        async function executePay() {
-            const v = parseFloat(document.getElementById('m-input-pay').value);
+        async function confirmPay() {
+            const v = parseFloat(document.getElementById('pop-input').value);
+            if (!v) return;
             const h = new Date().toISOString().split('T')[0];
-            await db.ref(`jc_elite_v130/clientes/${activeID}`).update({ saldo: activeData.saldo - v, u_f: h });
-            await db.ref(`jc_elite_v130/clientes/${activeID}/pagos`).push({ f: h, m: v });
-            closeModal();
+            await db.ref(`jc_v130/clientes/${actID}`).update({ saldo: actSal - v, u_f: h });
+            await db.ref(`jc_v130/clientes/${actID}/pagos`).push({ f: h, m: v });
+            closePop();
         }
 
-        async function saveNew() {
-            const n = document.getElementById('add-name').value, c = parseFloat(document.getElementById('add-cap').value);
-            const p = parseFloat(document.getElementById('add-days').value), d = document.getElementById('add-day').value, z = document.getElementById('add-zone').value;
-            const tot = c * 1.2, id = Date.now();
-            await db.ref('jc_elite_v130/clientes/'+id).set({ id, nombre: n, capital: c, saldo: tot, cuotaVal: Math.ceil(tot/p), plazo: p, dia: d, barrio: z, u_f: "" });
-            alert("CONTRATO REGISTRADO"); tab('ruta', document.querySelectorAll('.dock-tab')[0]);
-        }
+        async function addNew() {
+            const n = document.getElementById('nw-name').value;
+            const c = parseFloat(document.getElementById('nw-cap').value);
+            const i = parseFloat(document.getElementById('nw-int').value) / 100;
+            const d = parseFloat(document.getElementById('nw-days').value);
+            const day = document.getElementById('nw-day').value;
+            const b = document.getElementById('nw-barrio').value;
 
-        async function saveGasto() {
-            const d = document.getElementById('ex-desc').value, a = parseFloat(document.getElementById('ex-amt').value);
-            await db.ref('jc_elite_v130/gastos').push({ d, m: a, f: new Date().toISOString().split('T')[0] });
-            alert("GASTO GUARDADO");
-        }
+            if (!n || !c || !d) return alert("Completa todos los campos");
+            const h = new Date().toISOString().split('T')[0];
+            const tot = c + (c * i);
+            const id = Date.now();
 
-        function tab(t, b) {
-            document.querySelectorAll('.view-pane').forEach(v => v.classList.remove('active'));
-            document.getElementById('view-' + t).classList.add('active');
-            document.querySelectorAll('.dock-tab').forEach(x => x.classList.remove('active'));
-            b.classList.add('active');
-        }
-
-        function exportData() {
-            db.ref('jc_elite_v130').once('value', s => {
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(new Blob([JSON.stringify(s.val())], {type: 'application/json'}));
-                a.download = `JC_ELITE_BACKUP.json`; a.click();
+            await db.ref('jc_v130/clientes/' + id).set({
+                id, nombre: n, capital: c, saldo: tot, cuota: Math.ceil(tot / d),
+                dia: day, barrio: b, f_crea: h, u_f: ""
             });
+            alert("PRÉSTAMO CREADO");
+            tab('ruta', document.querySelectorAll('.dock-tab')[0]);
         }
-        
+
+        async function addGasto() {
+            const d = document.getElementById('gs-desc').value;
+            const v = parseFloat(document.getElementById('gs-val').value);
+            if (!d || !v) return;
+            const h = new Date().toISOString().split('T')[0];
+            await db.ref('jc_v130/gastos').push({ f: h, d, m: v });
+            document.getElementById('gs-desc').value = ""; document.getElementById('gs-val').value = "";
+            alert("GASTO REGISTRADO");
+        }
+
+        function tab(t, btn) {
+            document.querySelectorAll('.view-pane').forEach(p => p.classList.remove('active'));
+            document.getElementById('view-' + t).classList.add('active');
+            document.querySelectorAll('.dock-tab').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        function closePop() { document.getElementById('pop-pay').style.display = "none"; }
         render();
     </script>
 </body>
