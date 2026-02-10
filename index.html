@@ -2,241 +2,384 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>JC ELITE | Cloud Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>JC ELITE V130</title>
+
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;400;600;800&family=Syncopate:wght@700&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
     <style>
         :root {
-            --bg: #04070d; --surface: #0f172a; --accent: #3b82f6;
-            --orange: #f97316; --green: #10b981; --red: #ef4444;
-            --text: #f8fafc; --border: rgba(255, 255, 255, 0.08);
-        }
-        * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-
-        /* HEADER & LOGO */
-        .header { background: #000; padding: 15px; text-align: center; border-bottom: 1px solid var(--border); }
-        .logo-small { 
-            background: linear-gradient(135deg, var(--accent), var(--orange));
-            width: 40px; height: 40px; border-radius: 10px; display: inline-flex;
-            align-items: center; justify-content: center; font-weight: 800; color: white; margin-right: 10px;
+            --bg: #010204; --surface: #0a0b14; --card: #12141d; --gold: #d4af37;
+            --gold-glow: rgba(212, 175, 55, 0.4); --text: #ffffff; --text-dim: #6b7280;
+            --success: #00ffa3; --danger: #ff3131; --warning: #ffb800; --blue: #3182ff;
         }
 
-        /* NAVEGACIÓN INFERIOR (MÓVIL) */
-        nav { 
-            background: #000; display: flex; justify-content: space-around; 
-            padding: 12px; border-top: 1px solid var(--border); position: fixed; bottom: 0; width: 100%; 
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: var(--text); overflow-x: hidden; min-height: 100vh; padding-bottom: 120px; }
+
+        /* HEADER */
+        .master-header {
+            position: sticky; top: 0; z-index: 9999; height: 130px;
+            background: rgba(1, 2, 4, 0.98); backdrop-filter: blur(25px);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border-bottom: 1px solid var(--gold-glow);
         }
-        .btn-nav { background: none; border: none; color: #666; font-size: 11px; font-weight: 800; cursor: pointer; text-transform: uppercase; }
-        .btn-nav.active { color: var(--accent); }
+        .jc-logo { font-family: 'Syncopate', sans-serif; font-size: 42px; font-weight: 700; color: var(--gold); letter-spacing: 12px; text-shadow: 0 4px 10px rgba(0,0,0,0.5); line-height: 1; margin-bottom: 8px; }
+        .jc-status { font-size: 9px; font-weight: 800; color: var(--text-dim); letter-spacing: 6px; text-transform: uppercase; }
 
-        main { flex: 1; padding: 15px; overflow-y: auto; padding-bottom: 90px; }
+        .auth-zone { position: absolute; right: 15px; top: 15px; }
+        .token-field { background: #000; border: 1px solid var(--gold); border-radius: 8px; color: var(--gold); width: 75px; padding: 10px; text-align: center; font-family: 'JetBrains Mono'; font-size: 11px; }
 
-        /* TARJETAS */
-        .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .card-mini { background: var(--surface); padding: 15px; border-radius: 12px; border: 1px solid var(--border); }
+        /* NAVEGACIÓN DÍAS */
+        .day-scroller { background: var(--bg); padding: 15px 0; display: flex; gap: 10px; overflow-x: auto; padding-left: 20px; }
+        .day-scroller::-webkit-scrollbar { display: none; }
+        .day-btn { flex: 0 0 auto; padding: 12px 22px; border-radius: 15px; background: var(--card); border: 1px solid rgba(255,255,255,0.05); color: var(--text-dim); font-size: 11px; font-weight: 800; text-transform: uppercase; }
+        .day-btn.active { background: var(--gold); color: #000; box-shadow: 0 5px 15px var(--gold-glow); }
+
+        /* DASHBOARD */
+        .stats-grid { padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .stat-box { background: var(--surface); padding: 20px; border-radius: 25px; border: 1px solid rgba(255,255,255,0.05); position: relative; overflow: hidden; }
+        .stat-box.full { grid-column: span 2; border-color: var(--gold-glow); }
+        .stat-box label { display: block; font-size: 9px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; }
+        .stat-box .val { font-size: 24px; font-weight: 800; }
+        .stat-box i { position: absolute; right: -10px; bottom: -10px; font-size: 60px; opacity: 0.05; color: #fff; }
+
+        /* LISTADO */
+        .main-container { padding: 0 20px; }
+        .item-card { display: flex; justify-content: space-between; align-items: center; padding: 25px 0; border-bottom: 1px solid rgba(255,255,255,0.04); transition: 0.3s; }
+        .item-card.completed { opacity: 0.25; filter: grayscale(1); }
+        .item-card.alert { border-left: 4px solid var(--danger); padding-left: 15px; }
+        .item-info h3 { font-size: 20px; font-weight: 700; color: #fff; }
+        .item-info p { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+        .item-val { text-align: right; }
+        .item-val .money { font-size: 22px; font-weight: 800; color: var(--gold); }
+
+        /* MODALES */
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 10000; display: none; align-items: flex-end; }
+        .sheet { background: var(--surface); width: 100%; border-radius: 40px 40px 0 0; padding: 35px 25px; border-top: 3px solid var(--gold); max-height: 95vh; overflow-y: auto; }
+        .sheet-title { font-family: 'Syncopate'; font-size: 20px; color: var(--gold); margin-bottom: 25px; }
         
-        .search-bar { width: 100%; padding: 12px; background: #000; border: 1px solid var(--accent); border-radius: 10px; color: white; margin-bottom: 15px; }
+        .input-box { margin-bottom: 22px; }
+        .input-box label { display: block; font-size: 10px; font-weight: 800; color: var(--gold); text-transform: uppercase; margin-bottom: 10px; }
+        .input-box input, .input-box select { width: 100%; height: 75px; background: #000; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; color: #fff; padding: 0 25px; font-size: 26px; font-weight: 800; }
 
-        .client-box { 
-            background: var(--surface); padding: 15px; border-radius: 15px; margin-bottom: 12px; 
-            border-left: 8px solid var(--accent); display: flex; justify-content: space-between; align-items: center;
-        }
-        .mora { border-left-color: var(--red); background: rgba(239, 68, 68, 0.08); }
-        
-        .btn-cuota { 
-            width: 42px; height: 42px; margin: 2px; border-radius: 8px; border: 1px solid #333; 
-            background: #000; color: white; font-weight: 800; cursor: pointer;
-        }
-        .pago-ok { background: var(--green); color: black; border-color: var(--green); }
+        .btn-action { width: 100%; height: 75px; background: var(--gold); border: none; border-radius: 22px; color: #000; font-weight: 800; font-size: 16px; text-transform: uppercase; margin-bottom: 12px; }
+        .btn-danger { width: 100%; height: 60px; background: rgba(255,49,49,0.1); border: 1px solid var(--danger); border-radius: 20px; color: var(--danger); font-weight: 800; margin-bottom: 12px; }
+        .btn-sec { width: 100%; height: 60px; background: transparent; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; color: var(--text-dim); font-weight: 600; }
 
-        /* FORMULARIO */
-        input { width: 100%; padding: 14px; margin: 10px 0; background: #000; border: 1px solid #333; color: white; border-radius: 10px; }
-        .btn-add { width: 100%; padding: 16px; background: var(--orange); border: none; color: white; font-weight: 800; border-radius: 12px; cursor: pointer; }
+        /* TABLAS Y AJUSTES */
+        .stats-table { width: 100%; margin-top: 20px; border-collapse: collapse; }
+        .stats-table th { text-align: left; font-size: 10px; color: var(--gold); padding: 10px; text-transform: uppercase; }
+        .stats-table td { padding: 15px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; }
+        .best-month { color: var(--success); font-weight: 800; }
 
-        .hidden { display: none; }
+        .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 20px; background: var(--card); border-radius: 20px; margin-bottom: 10px; }
+        .setting-info h4 { font-size: 14px; color: #fff; }
+        .setting-info p { font-size: 11px; color: var(--text-dim); }
+
+        /* DOCK */
+        .dock { position: fixed; bottom: 25px; left: 5%; width: 90%; height: 85px; background: rgba(18, 20, 25, 0.98); backdrop-filter: blur(25px); border-radius: 35px; border: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-around; align-items: center; z-index: 9000; }
+        .dock-tab { border: none; background: none; color: var(--text-dim); display: flex; flex-direction: column; align-items: center; gap: 5px; transition: 0.3s; }
+        .dock-tab.active { color: var(--gold); transform: translateY(-5px); }
+        .dock-tab i { font-size: 24px; }
+        .dock-tab span { font-size: 10px; font-weight: 800; text-transform: uppercase; }
+
+        /* VISIBILIDAD JEFE */
+        .boss-only { display: none !important; }
+        .is-boss .boss-only { display: block !important; }
+        .view-pane { display: none; }
+        .view-pane.active { display: block; }
     </style>
 </head>
-<body>
+<body id="jc-app">
 
-<div class="header">
-    <div class="logo-small">JC</div>
-    <span style="font-weight: 800; letter-spacing: 1px;">JC ELITE CLOUD</span>
-</div>
+    <header class="master-header">
+        <div class="jc-logo">JC</div>
+        <div class="jc-status">Authority Elite V130</div>
+        <div class="auth-zone"><input type="password" class="token-field" placeholder="TOKEN" onkeyup="checkBoss(this.value)"></div>
+    </header>
 
-<main>
-    <div class="kpi-grid">
-        <div class="card-mini"><small style="color:var(--accent)">EN CALLE</small><div id="k-calle" style="font-size:18px; font-weight:800">$ 0</div></div>
-        <div class="card-mini"><small style="color:var(--green)">CAJA</small><div id="k-caja" style="font-size:18px; font-weight:800">$ 0</div></div>
-    </div>
+    <nav class="day-scroller" id="day-bar">
+        <button class="day-btn active" onclick="setDay('Lunes', this)">Lun</button>
+        <button class="day-btn" onclick="setDay('Martes', this)">Mar</button>
+        <button class="day-btn" onclick="setDay('Miercoles', this)">Mie</button>
+        <button class="day-btn" onclick="setDay('Jueves', this)">Jue</button>
+        <button class="day-btn" onclick="setDay('Viernes', this)">Vie</button>
+        <button class="day-btn" onclick="setDay('Sabado', this)">Sab</button>
+        <button class="day-btn" onclick="setDay('Domingo', this)">Dom</button>
+    </nav>
 
-    <div id="pantalla-list">
-        <input type="text" id="buscador" onkeyup="buscar()" class="search-bar" placeholder="🔍 Buscar cliente...">
-        <div id="lista-clientes">Conectando con la nube...</div>
-    </div>
+    <main id="view-ruta" class="view-pane active">
+        <section class="stats-grid">
+            <div class="stat-box full boss-only"><label>Capital en Calle</label><span id="st-total" class="val" style="color:var(--gold);">$ 0</span><i class="fa-solid fa-vault"></i></div>
+            <div class="stat-box"><label>Cobro Hoy</label><span id="st-cobro" class="val" style="color:var(--success);">$ 0</span><i class="fa-solid fa-hand-holding-dollar"></i></div>
+            <div class="stat-box"><label>Gastos</label><span id="st-gastos" class="val" style="color:var(--danger);">$ 0</span><i class="fa-solid fa-money-bill-transfer"></i></div>
+        </section>
+        <div style="padding: 0 20px 15px;"><input type="text" id="search" class="day-btn" style="width:100%; text-align:left; padding-left:20px;" placeholder="Buscar cliente..." onkeyup="render()"></div>
+        <div id="render-list" class="main-container"></div>
+    </main>
 
-    <div id="pantalla-reg" class="hidden">
-        <div class="card-mini">
-            <h2 style="margin:0 0 15px">Nuevo Crédito</h2>
-            <input type="text" id="nom" placeholder="Nombre del cliente">
-            <input type="number" id="mon" placeholder="Monto a prestar">
-            <button class="btn-add" onclick="guardar()">SUBIR A LA NUBE</button>
+    <main id="view-stats" class="view-pane" style="padding:30px;">
+        <h2 class="sheet-title">Rendimiento Histórico</h2>
+        <div class="stat-box full" style="margin-bottom:20px; background: linear-gradient(145deg, #0a0b14, #1a1e30);">
+            <label>Mejor Mes (Récord)</label>
+            <span id="best-month-label" class="val" style="color:var(--success);">---</span>
         </div>
-    </div>
+        <table class="stats-table">
+            <thead><tr><th>Mes / Año</th><th>Recaudo Neto</th></tr></thead>
+            <tbody id="stats-body"></tbody>
+        </table>
+    </main>
 
-    <div id="pantalla-boss" class="hidden">
-        <div class="card-mini" style="height: 300px;">
-            <canvas id="graficaJefe"></canvas>
+    <main id="view-gastos" class="view-pane" style="padding:30px;">
+        <h2 class="sheet-title" style="color:var(--danger);">Registro de Gasto</h2>
+        <div class="input-box"><label>Motivo del Gasto</label><input type="text" id="ex-desc"></div>
+        <div class="input-box"><label>Monto $</label><input type="number" id="ex-amt"></div>
+        <button class="btn-action" style="background:var(--danger); color:#fff;" onclick="saveGasto()">CONFIRMAR SALIDA</button>
+    </main>
+
+    <main id="view-admin" class="view-pane" style="padding:30px;">
+        <h2 class="sheet-title">Nuevo Préstamo</h2>
+        <div class="input-box"><label>Nombre del Cliente</label><input type="text" id="add-name"></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+            <div class="input-box"><label>Capital $</label><input type="number" id="add-cap"></div>
+            <div class="input-box"><label>Cuotas</label><input type="number" id="add-days" value="24"></div>
         </div>
-        <button onclick="exportarBackup()" style="margin-top:20px; background:none; border:1px solid #333; color:gray; width:100%; padding:10px; border-radius:10px">Descargar Backup (JSON)</button>
-    </div>
-</main>
+        <div class="input-box"><label>Día de Cobro</label><select id="add-day"><option>Lunes</option><option>Martes</option><option>Miercoles</option><option>Jueves</option><option>Viernes</option><option>Sabado</option><option>Domingo</option></select></div>
+        <div class="input-box"><label>Zona / Barrio</label><input type="text" id="add-zone"></div>
+        <button class="btn-action" onclick="saveNew()">ACTIVAR CRÉDITO</button>
+    </main>
 
-<nav>
-    <button class="btn-nav active" onclick="ver('list')">COBROS</button>
-    <button class="btn-nav" onclick="ver('reg')">NUEVO</button>
-    <button class="btn-nav" onclick="ver('boss')">REPORTES</button>
-</nav>
+    <main id="view-settings" class="view-pane" style="padding:30px;">
+        <h2 class="sheet-title">Ajustes Maestro</h2>
+        
+        <div class="setting-row">
+            <div class="setting-info"><h4>Base de Datos</h4><p>Estado de conexión: Sincronizado</p></div>
+            <i class="fa-solid fa-cloud-check" style="color:var(--success);"></i>
+        </div>
 
-<script>
-    // --- CONFIGURACIÓN DE FIREBASE ---
-    const firebaseConfig = {
-        apiKey: "AIzaSyCRNI3MwglHZfmCyRTv3xrxnuOe73yafNU",
-        authDomain: "jc-elite.firebaseapp.com",
-        databaseURL: "https://jc-elite-default-rtdb.firebaseio.com",
-        projectId: "jc-elite",
-        storageBucket: "jc-elite.firebasestorage.app",
-        messagingSenderId: "183298625822",
-        appId: "1:183298625822:web:f7f0a7087600cffbb8b90f",
-        measurementId: "G-J7RFJ6T7QF"
-    };
+        <div class="setting-row" onclick="exportData()" style="cursor:pointer;">
+            <div class="setting-info"><h4>Copia de Seguridad</h4><p>Descargar datos actuales</p></div>
+            <i class="fa-solid fa-download" style="color:var(--blue);"></i>
+        </div>
 
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
-    let localDB = {};
+        <div style="margin-top:40px; border-top:1px solid rgba(255,49,49,0.2); padding-top:30px;">
+            <h3 style="color:var(--danger); font-size:11px; text-transform:uppercase; margin-bottom:15px;">Zona Crítica</h3>
+            <button class="btn-danger" onclick="masterReset()">RESETEAR TODA LA RUTA (777)</button>
+        </div>
+    </main>
 
-    // --- SINCRONIZACIÓN EN TIEMPO REAL ---
-    database.ref('clientes').on('value', (snapshot) => {
-        localDB = snapshot.val() || {};
-        renderizar();
-    });
-
-    function guardar() {
-        const n = document.getElementById('nom').value;
-        const m = parseFloat(document.getElementById('mon').value);
-        if(!n || !m) return alert("Completa los datos");
-
-        const id = Date.now();
-        const t = m * 1.20;
-        const nuevo = {
-            id: id, nom: n, base: m, total: t, cuota: t/4,
-            pagos: [false, false, false, false], fecha: id
-        };
-
-        database.ref('clientes/' + id).set(nuevo);
-        document.getElementById('nom').value = "";
-        document.getElementById('mon').value = "";
-        ver('list');
-    }
-
-    function togglePago(cid, idx, actual) {
-        database.ref('clientes/' + cid + '/pagos/' + idx).set(!actual);
-    }
-
-    function renderizar() {
-        const cont = document.getElementById('lista-clientes');
-        cont.innerHTML = "";
-        let calle = 0, caja = 0;
-        const unMes = 30 * 24 * 60 * 60 * 1000;
-
-        const lista = Object.values(localDB).sort((a,b) => b.id - a.id);
-
-        lista.forEach(p => {
-            const nP = p.pagos ? p.pagos.filter(x => x).length : 0;
-            const saldo = p.total - (nP * p.cuota);
-            const mora = (Date.now() - p.fecha > unMes && saldo > 0) || (nP === 0 && saldo > 0);
+    <div class="overlay" id="modal-master">
+        <div class="sheet">
+            <h2 id="m-name" class="sheet-title">---</h2>
+            <div style="display:flex; justify-content:space-between; margin-bottom:30px; background:rgba(255,255,255,0.03); padding:20px; border-radius:20px;">
+                <div><label style="font-size:9px;">PENDIENTE</label><span id="m-saldo" style="font-size:24px; font-weight:800; color:var(--gold);">$ 0</span></div>
+                <div style="text-align:right;"><label style="font-size:9px;">CUOTA</label><span id="m-cuota" style="font-size:24px; font-weight:800; color:var(--success);">$ 0</span></div>
+            </div>
             
-            caja += (nP * p.cuota);
-            calle += saldo;
+            <div class="input-box"><label>Valor a Cobrar</label><input type="number" id="m-input-pay"></div>
+            <button class="btn-action" onclick="executePay()">REGISTRAR ABONO</button>
 
-            cont.innerHTML += `
-                <div class="client-box ${mora ? 'mora' : ''}">
-                    <div>
-                        <b style="font-size:17px">${p.nom}</b><br>
-                        <small style="color:var(--orange)">Cuota: ${f(p.cuota)}</small>
-                        <div style="margin-top:8px">
-                            ${[0,1,2,3].map(i => `
-                                <button class="btn-cuota ${p.pagos && p.pagos[i] ? 'pago-ok' : ''}" 
-                                onclick="togglePago(${p.id}, ${i}, ${p.pagos?p.pagos[i]:false})">${i+1}</button>
-                            `).join('')}
-                        </div>
-                    </div>
-                    <div style="text-align:right">
-                        <div style="font-size:20px; font-weight:800; ${mora?'color:var(--red)':''}">${f(saldo)}</div>
-                        <button onclick="eliminar(${p.id})" style="border:none; background:none; color:#444; margin-top:10px">Eliminar</button>
-                    </div>
+            <div class="boss-only">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <button class="btn-danger" style="background:var(--success); color:#000; border:none;" onclick="renewC()">RENOVAR</button>
+                    <button class="btn-danger" onclick="deleteC()">ELIMINAR</button>
                 </div>
-            `;
-        });
-        document.getElementById('k-calle').innerText = f(calle);
-        document.getElementById('k-caja').innerText = f(caja);
-    }
+            </div>
+            <button class="btn-sec" onclick="closeModal()">REGRESAR</button>
+            <div id="m-history" style="margin-top:25px; border-top:1px solid rgba(255,255,255,0.05); padding-top:20px;"></div>
+        </div>
+    </div>
 
-    const f = (n) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n);
+    <nav class="dock">
+        <button class="dock-tab active" onclick="tab('ruta', this)"><i class="fa-solid fa-house-fire"></i><span>Ruta</span></button>
+        <button class="dock-tab" onclick="tab('stats', this)"><i class="fa-solid fa-chart-pie"></i><span>Stats</span></button>
+        <button class="dock-tab" onclick="tab('gastos', this)"><i class="fa-solid fa-receipt"></i><span>Gastos</span></button>
+        <button class="dock-tab boss-only" onclick="tab('admin', this)"><i class="fa-solid fa-user-plus"></i><span>Nuevo</span></button>
+        <button class="dock-tab boss-only" onclick="tab('settings', this)"><i class="fa-solid fa-sliders"></i><span>Ajustes</span></button>
+    </nav>
 
-    function eliminar(id) { if(confirm('¿Borrar crédito?')) database.ref('clientes/' + id).remove(); }
+    <script>
+        // CONFIGURACIÓN FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyCRNI3MwglHZfmCyRTv3xrxnuOe73yafNU",
+            authDomain: "jc-elite.firebaseapp.com",
+            databaseURL: "https://jc-elite-default-rtdb.firebaseio.com",
+            projectId: "jc-elite",
+            appId: "1:183298625822:web:f7f0a7087600cffbb8b90f"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-    function ver(id) {
-        document.getElementById('pantalla-list').classList.add('hidden');
-        document.getElementById('pantalla-reg').classList.add('hidden');
-        document.getElementById('pantalla-boss').classList.add('hidden');
-        document.getElementById('pantalla-' + id).classList.remove('hidden');
-        document.querySelectorAll('.btn-nav').forEach(b => b.classList.remove('active'));
-        event.currentTarget.classList.add('active');
-        if(id === 'boss') renderGrafica();
-    }
+        let selDay = "Lunes", isBoss = false, activeID = null, activeData = null;
+        const cur = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(v);
 
-    function buscar() {
-        let txt = document.getElementById('buscador').value.toUpperCase();
-        let cards = document.getElementsByClassName('client-box');
-        for (let i = 0; i < cards.length; i++) {
-            cards[i].style.display = cards[i].innerText.toUpperCase().includes(txt) ? "" : "none";
+        // --- SEGURIDAD JC7 ---
+        function checkBoss(v) { 
+            isBoss = (v.toUpperCase() === "JC7"); 
+            document.getElementById('jc-app').className = isBoss ? 'is-boss' : ''; 
+            render(); 
         }
-    }
 
-    let miChart = null;
-    function renderGrafica() {
-        let caja = 0, calle = 0;
-        Object.values(localDB).forEach(p => {
-            let nP = p.pagos ? p.pagos.filter(x => x).length : 0;
-            caja += nP * p.cuota;
-            calle += (p.total - (nP * p.cuota));
-        });
-        const ctx = document.getElementById('graficaJefe').getContext('2d');
-        if(miChart) miChart.destroy();
-        miChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Caja', 'Calle'],
-                datasets: [{ data: [caja, calle], backgroundColor: ['#10b981', '#3b82f6'], borderWidth: 0 }]
-            },
-            options: { maintainAspectRatio: false }
-        });
-    }
+        function setDay(d, b) { 
+            selDay = d; 
+            document.querySelectorAll('.day-btn').forEach(x => x.classList.remove('active')); 
+            b.classList.add('active'); 
+            render(); 
+        }
 
-    function exportarBackup() {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(localDB));
-        const downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", "backup_jcelite.json");
-        document.body.appendChild(downloadAnchorNode);
-        downloadAnchorNode.click();
-        downloadAnchorNode.remove();
-    }
-</script>
+        function render() {
+            const h = new Date().toISOString().split('T')[0];
+            const q = document.getElementById('search').value.toLowerCase();
+
+            db.ref('jc_elite_v130').on('value', snap => {
+                const data = snap.val() || {};
+                const cls = data.clientes || {};
+                const gts = data.gastos || {};
+                const list = document.getElementById('render-list');
+                list.innerHTML = "";
+                
+                let reHoy = 0, gaHoy = 0, totalP = 0;
+                let statsMap = {};
+
+                Object.values(cls).forEach(c => {
+                    if(c.saldo > 0) totalP += c.saldo;
+                    if(c.pagos) {
+                        Object.values(c.pagos).forEach(p => {
+                            if(p.f === h) reHoy += p.m;
+                            let mes = p.f.substring(0, 7);
+                            statsMap[mes] = (statsMap[mes] || 0) + p.m;
+                        });
+                    }
+
+                    // FILTRO DE VISTA RUTA
+                    if(c.saldo > 0 && c.dia === selDay && (c.nombre.toLowerCase().includes(q))) {
+                        const done = (c.u_f === h);
+                        const mora = c.u_f ? Math.floor((new Date() - new Date(c.u_f)) / 86400000) : 0;
+                        const card = document.createElement('div');
+                        card.className = `item-card ${done ? 'completed' : ''} ${!done && mora > 1 ? 'alert' : ''}`;
+                        card.onclick = () => openModal(c);
+                        card.innerHTML = `
+                            <div class="item-info">
+                                <h3>${c.nombre}</h3>
+                                <p>📍 ${c.barrio} ${!done && mora > 1 ? `<span style="color:var(--danger); font-weight:800">! MORA</span>` : ''}</p>
+                            </div>
+                            <div class="item-val">
+                                <span class="money">${cur(c.saldo)}</span>
+                            </div>
+                        `;
+                        list.appendChild(card);
+                    }
+                });
+
+                Object.values(gts).forEach(g => { if(g.f === h) gaHoy += g.m; });
+                document.getElementById('st-cobro').innerText = cur(reHoy - gaHoy);
+                document.getElementById('st-gastos').innerText = cur(gaHoy);
+                document.getElementById('st-total').innerText = cur(totalP);
+
+                // ESTADÍSTICAS MENSUALES
+                const sBody = document.getElementById('stats-body');
+                sBody.innerHTML = "";
+                let max = 0, best = "---";
+                Object.keys(statsMap).sort().reverse().forEach(m => {
+                    if(statsMap[m] > max) { max = statsMap[m]; best = m; }
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${m}</td><td class="${m === best ? 'best-month' : ''}">${cur(statsMap[m])}</td>`;
+                    sBody.appendChild(tr);
+                });
+                document.getElementById('best-month-label').innerText = best + " (" + cur(max) + ")";
+            });
+        }
+
+        // --- FUNCIONES DE MANDO ---
+        async function masterReset() {
+            const pass = prompt("PARA RESETEAR ESCRIBA 777:");
+            if(pass === "777") {
+                if(confirm("¡ADVERTENCIA! Se borrará todo. ¿Proceder?")) {
+                    await db.ref('jc_elite_v130').remove();
+                    alert("SISTEMA EN CERO");
+                }
+            } else { alert("CLAVE INCORRECTA"); }
+        }
+
+        function openModal(c) {
+            activeID = c.id; activeData = c;
+            document.getElementById('m-name').innerText = c.nombre;
+            document.getElementById('m-saldo').innerText = cur(c.saldo);
+            document.getElementById('m-cuota').innerText = cur(c.cuotaVal);
+            document.getElementById('m-input-pay').value = Math.min(c.cuotaVal, c.saldo);
+            
+            const log = document.getElementById('m-history');
+            log.innerHTML = '<label style="font-size:9px; color:var(--gold);">ÚLTIMOS MOVIMIENTOS</label>';
+            if(c.pagos) Object.values(c.pagos).reverse().slice(0,3).forEach(p => {
+                log.innerHTML += `<div style="display:flex; justify-content:space-between; margin-top:10px; font-size:12px;"><span>${p.f}</span><span style="color:var(--success); font-weight:800">${cur(p.m)}</span></div>`;
+            });
+
+            document.getElementById('modal-master').style.display = "flex";
+        }
+
+        function closeModal() { document.getElementById('modal-master').style.display = "none"; }
+
+        async function executePay() {
+            const v = parseFloat(document.getElementById('m-input-pay').value);
+            if(!v || v > activeData.saldo) return alert("MONTO INVÁLIDO");
+            const h = new Date().toISOString().split('T')[0];
+            await db.ref(`jc_elite_v130/clientes/${activeID}`).update({ saldo: activeData.saldo - v, u_f: h });
+            await db.ref(`jc_elite_v130/clientes/${activeID}/pagos`).push({ f: h, m: v, t: new Date().toLocaleTimeString() });
+            closeModal();
+        }
+
+        async function renewC() {
+            const n = prompt("Nuevo Capital:", activeData.capital);
+            if(!n) return;
+            const tot = n * 1.2;
+            await db.ref(`jc_elite_v130/clientes/${activeID}`).update({ saldo: tot, u_f: "", pagos: null });
+            alert("CLIENTE RENOVADO"); closeModal();
+        }
+
+        async function deleteC() {
+            if(confirm("¿ELIMINAR CLIENTE?")) { await db.ref(`jc_elite_v130/clientes/${activeID}`).remove(); closeModal(); }
+        }
+
+        async function saveNew() {
+            const n = document.getElementById('add-name').value, c = parseFloat(document.getElementById('add-cap').value);
+            const p = parseFloat(document.getElementById('add-days').value), d = document.getElementById('add-day').value, z = document.getElementById('add-zone').value;
+            if(!n || !c) return;
+            const tot = c * 1.2, cV = Math.ceil(tot/p), id = Date.now();
+            await db.ref('jc_elite_v130/clientes/'+id).set({ id, nombre: n, capital: c, saldo: tot, cuotaVal: cV, plazo: p, dia: d, barrio: z, u_f: "" });
+            alert("CONTRATO REGISTRADO"); tab('ruta', document.querySelectorAll('.dock-tab')[0]);
+        }
+
+        async function saveGasto() {
+            const d = document.getElementById('ex-desc').value, a = parseFloat(document.getElementById('ex-amt').value);
+            if(!d || !a) return;
+            await db.ref('jc_elite_v130/gastos').push({ d, m: a, f: new Date().toISOString().split('T')[0], t: new Date().toLocaleTimeString() });
+            alert("GASTO GUARDADO");
+        }
+
+        function tab(t, b) {
+            document.querySelectorAll('.view-pane').forEach(v => v.classList.remove('active'));
+            document.getElementById('view-' + t).classList.add('active');
+            document.querySelectorAll('.dock-tab').forEach(x => x.classList.remove('active'));
+            b.classList.add('active');
+        }
+
+        function exportData() {
+            db.ref('jc_elite_v130').once('value', s => {
+                const data = JSON.stringify(s.val(), null, 2);
+                const blob = new Blob([data], {type: 'application/json'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = `JC_BACKUP_${new Date().toLocaleDateString()}.json`;
+                a.click();
+            });
+        }
+
+        render();
+    </script>
 </body>
 </html>
