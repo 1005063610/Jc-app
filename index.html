@@ -3,7 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>JC ELITE V130</title>
+    <title>JC ELITE</title>
+
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="JC ELITE">
+    <meta name="theme-color" content="#010204">
+    
+    <link rel="apple-touch-icon" href="https://i.imgur.com/TuUfP9j.png">
+    <link rel="icon" href="https://i.imgur.com/TuUfP9j.png">
+    <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22JC%20ELITE%22,%22short_name%22:%22JC%20ELITE%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23010204%22,%22theme_color%22:%22%23d4af37%22,%22icons%22:[{%22src%22:%22https://i.imgur.com/TuUfP9j.png%22,%22sizes%22:%22192x192%22,%22type%22:%22image/png%22},{%22src%22:%22https://i.imgur.com/TuUfP9j.png%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22}]}">
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -21,7 +31,6 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: var(--text); overflow-x: hidden; min-height: 100vh; padding-bottom: 120px; }
 
-        /* HEADER */
         .master-header {
             position: sticky; top: 0; z-index: 9999; height: 130px;
             background: rgba(1, 2, 4, 0.98); backdrop-filter: blur(25px);
@@ -34,13 +43,11 @@
         .auth-zone { position: absolute; right: 15px; top: 15px; }
         .token-field { background: #000; border: 1px solid var(--gold); border-radius: 8px; color: var(--gold); width: 75px; padding: 10px; text-align: center; font-family: 'JetBrains Mono'; font-size: 11px; }
 
-        /* NAVEGACIÓN DÍAS */
         .day-scroller { background: var(--bg); padding: 15px 0; display: flex; gap: 10px; overflow-x: auto; padding-left: 20px; }
         .day-scroller::-webkit-scrollbar { display: none; }
         .day-btn { flex: 0 0 auto; padding: 12px 22px; border-radius: 15px; background: var(--card); border: 1px solid rgba(255,255,255,0.05); color: var(--text-dim); font-size: 11px; font-weight: 800; text-transform: uppercase; }
         .day-btn.active { background: var(--gold); color: #000; box-shadow: 0 5px 15px var(--gold-glow); }
 
-        /* DASHBOARD */
         .stats-grid { padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .stat-box { background: var(--surface); padding: 20px; border-radius: 25px; border: 1px solid rgba(255,255,255,0.05); position: relative; overflow: hidden; }
         .stat-box.full { grid-column: span 2; border-color: var(--gold-glow); }
@@ -48,7 +55,6 @@
         .stat-box .val { font-size: 24px; font-weight: 800; }
         .stat-box i { position: absolute; right: -10px; bottom: -10px; font-size: 60px; opacity: 0.05; color: #fff; }
 
-        /* LISTADO */
         .main-container { padding: 0 20px; }
         .item-card { display: flex; justify-content: space-between; align-items: center; padding: 25px 0; border-bottom: 1px solid rgba(255,255,255,0.04); transition: 0.3s; }
         .item-card.completed { opacity: 0.25; filter: grayscale(1); }
@@ -58,7 +64,6 @@
         .item-val { text-align: right; }
         .item-val .money { font-size: 22px; font-weight: 800; color: var(--gold); }
 
-        /* MODALES */
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 10000; display: none; align-items: flex-end; }
         .sheet { background: var(--surface); width: 100%; border-radius: 40px 40px 0 0; padding: 35px 25px; border-top: 3px solid var(--gold); max-height: 95vh; overflow-y: auto; }
         .sheet-title { font-family: 'Syncopate'; font-size: 20px; color: var(--gold); margin-bottom: 25px; }
@@ -71,7 +76,6 @@
         .btn-danger { width: 100%; height: 60px; background: rgba(255,49,49,0.1); border: 1px solid var(--danger); border-radius: 20px; color: var(--danger); font-weight: 800; margin-bottom: 12px; }
         .btn-sec { width: 100%; height: 60px; background: transparent; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; color: var(--text-dim); font-weight: 600; }
 
-        /* TABLAS Y AJUSTES */
         .stats-table { width: 100%; margin-top: 20px; border-collapse: collapse; }
         .stats-table th { text-align: left; font-size: 10px; color: var(--gold); padding: 10px; text-transform: uppercase; }
         .stats-table td { padding: 15px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; }
@@ -81,18 +85,20 @@
         .setting-info h4 { font-size: 14px; color: #fff; }
         .setting-info p { font-size: 11px; color: var(--text-dim); }
 
-        /* DOCK */
         .dock { position: fixed; bottom: 25px; left: 5%; width: 90%; height: 85px; background: rgba(18, 20, 25, 0.98); backdrop-filter: blur(25px); border-radius: 35px; border: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-around; align-items: center; z-index: 9000; }
         .dock-tab { border: none; background: none; color: var(--text-dim); display: flex; flex-direction: column; align-items: center; gap: 5px; transition: 0.3s; }
         .dock-tab.active { color: var(--gold); transform: translateY(-5px); }
         .dock-tab i { font-size: 24px; }
         .dock-tab span { font-size: 10px; font-weight: 800; text-transform: uppercase; }
 
-        /* VISIBILIDAD JEFE */
         .boss-only { display: none !important; }
         .is-boss .boss-only { display: block !important; }
         .view-pane { display: none; }
         .view-pane.active { display: block; }
+
+        /* CIERRE DE CAJA CARD */
+        .cash-card { background: linear-gradient(135deg, #12141d, #010204); padding: 25px; border-radius: 30px; border: 1px solid var(--gold-glow); margin-top: 20px; text-align: center; }
+        .cash-val { font-size: 38px; font-weight: 800; color: var(--success); margin: 15px 0; }
     </style>
 </head>
 <body id="jc-app">
@@ -121,6 +127,19 @@
         </section>
         <div style="padding: 0 20px 15px;"><input type="text" id="search" class="day-btn" style="width:100%; text-align:left; padding-left:20px;" placeholder="Buscar cliente..." onkeyup="render()"></div>
         <div id="render-list" class="main-container"></div>
+    </main>
+
+    <main id="view-cierre" class="view-pane" style="padding:30px;">
+        <h2 class="sheet-title">Cierre de Caja</h2>
+        <div class="cash-card">
+            <label style="font-size:10px; color:var(--gold); text-transform:uppercase;">Efectivo en Mano</label>
+            <div id="cash-hand" class="cash-val">$ 0</div>
+            <p style="font-size:11px; color:var(--text-dim);">Resultado de: Cobros - Gastos</p>
+        </div>
+        <div style="margin-top:25px;">
+            <button class="btn-action" onclick="cerrarCaja()">CERRAR CAJA DE HOY</button>
+            <p style="font-size:10px; color:var(--text-dim); text-align:center; margin-top:10px;">El cierre guardará el total neto en el historial y limpiará la vista de hoy.</p>
+        </div>
     </main>
 
     <main id="view-stats" class="view-pane" style="padding:30px;">
@@ -156,19 +175,11 @@
 
     <main id="view-settings" class="view-pane" style="padding:30px;">
         <h2 class="sheet-title">Ajustes Maestro</h2>
-        
-        <div class="setting-row">
-            <div class="setting-info"><h4>Base de Datos</h4><p>Estado de conexión: Sincronizado</p></div>
-            <i class="fa-solid fa-cloud-check" style="color:var(--success);"></i>
-        </div>
-
         <div class="setting-row" onclick="exportData()" style="cursor:pointer;">
             <div class="setting-info"><h4>Copia de Seguridad</h4><p>Descargar datos actuales</p></div>
             <i class="fa-solid fa-download" style="color:var(--blue);"></i>
         </div>
-
-        <div style="margin-top:40px; border-top:1px solid rgba(255,49,49,0.2); padding-top:30px;">
-            <h3 style="color:var(--danger); font-size:11px; text-transform:uppercase; margin-bottom:15px;">Zona Crítica</h3>
+        <div style="margin-top:40px;">
             <button class="btn-danger" onclick="masterReset()">RESETEAR TODA LA RUTA (777)</button>
         </div>
     </main>
@@ -180,10 +191,8 @@
                 <div><label style="font-size:9px;">PENDIENTE</label><span id="m-saldo" style="font-size:24px; font-weight:800; color:var(--gold);">$ 0</span></div>
                 <div style="text-align:right;"><label style="font-size:9px;">CUOTA</label><span id="m-cuota" style="font-size:24px; font-weight:800; color:var(--success);">$ 0</span></div>
             </div>
-            
             <div class="input-box"><label>Valor a Cobrar</label><input type="number" id="m-input-pay"></div>
             <button class="btn-action" onclick="executePay()">REGISTRAR ABONO</button>
-
             <div class="boss-only">
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
                     <button class="btn-danger" style="background:var(--success); color:#000; border:none;" onclick="renewC()">RENOVAR</button>
@@ -197,6 +206,7 @@
 
     <nav class="dock">
         <button class="dock-tab active" onclick="tab('ruta', this)"><i class="fa-solid fa-house-fire"></i><span>Ruta</span></button>
+        <button class="dock-tab" onclick="tab('cierre', this)"><i class="fa-solid fa-vault"></i><span>Caja</span></button>
         <button class="dock-tab" onclick="tab('stats', this)"><i class="fa-solid fa-chart-pie"></i><span>Stats</span></button>
         <button class="dock-tab" onclick="tab('gastos', this)"><i class="fa-solid fa-receipt"></i><span>Gastos</span></button>
         <button class="dock-tab boss-only" onclick="tab('admin', this)"><i class="fa-solid fa-user-plus"></i><span>Nuevo</span></button>
@@ -204,7 +214,6 @@
     </nav>
 
     <script>
-        // CONFIGURACIÓN FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyCRNI3MwglHZfmCyRTv3xrxnuOe73yafNU",
             authDomain: "jc-elite.firebaseapp.com",
@@ -215,10 +224,9 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let selDay = "Lunes", isBoss = false, activeID = null, activeData = null;
+        let selDay = "Lunes", isBoss = false, activeID = null, activeData = null, netCash = 0;
         const cur = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(v);
 
-        // --- SEGURIDAD JC7 ---
         function checkBoss(v) { 
             isBoss = (v.toUpperCase() === "JC7"); 
             document.getElementById('jc-app').className = isBoss ? 'is-boss' : ''; 
@@ -256,54 +264,39 @@
                         });
                     }
 
-                    // FILTRO DE VISTA RUTA
                     if(c.saldo > 0 && c.dia === selDay && (c.nombre.toLowerCase().includes(q))) {
                         const done = (c.u_f === h);
-                        const mora = c.u_f ? Math.floor((new Date() - new Date(c.u_f)) / 86400000) : 0;
                         const card = document.createElement('div');
-                        card.className = `item-card ${done ? 'completed' : ''} ${!done && mora > 1 ? 'alert' : ''}`;
+                        card.className = `item-card ${done ? 'completed' : ''}`;
                         card.onclick = () => openModal(c);
-                        card.innerHTML = `
-                            <div class="item-info">
-                                <h3>${c.nombre}</h3>
-                                <p>📍 ${c.barrio} ${!done && mora > 1 ? `<span style="color:var(--danger); font-weight:800">! MORA</span>` : ''}</p>
-                            </div>
-                            <div class="item-val">
-                                <span class="money">${cur(c.saldo)}</span>
-                            </div>
-                        `;
+                        card.innerHTML = `<div class="item-info"><h3>${c.nombre}</h3><p>📍 ${c.barrio}</p></div><div class="item-val"><span class="money">${cur(c.saldo)}</span></div>`;
                         list.appendChild(card);
                     }
                 });
 
                 Object.values(gts).forEach(g => { if(g.f === h) gaHoy += g.m; });
-                document.getElementById('st-cobro').innerText = cur(reHoy - gaHoy);
+                netCash = reHoy - gaHoy;
+                document.getElementById('st-cobro').innerText = cur(reHoy);
                 document.getElementById('st-gastos').innerText = cur(gaHoy);
                 document.getElementById('st-total').innerText = cur(totalP);
+                document.getElementById('cash-hand').innerText = cur(netCash);
 
-                // ESTADÍSTICAS MENSUALES
                 const sBody = document.getElementById('stats-body');
                 sBody.innerHTML = "";
-                let max = 0, best = "---";
                 Object.keys(statsMap).sort().reverse().forEach(m => {
-                    if(statsMap[m] > max) { max = statsMap[m]; best = m; }
                     const tr = document.createElement('tr');
-                    tr.innerHTML = `<td>${m}</td><td class="${m === best ? 'best-month' : ''}">${cur(statsMap[m])}</td>`;
+                    tr.innerHTML = `<td>${m}</td><td>${cur(statsMap[m])}</td>`;
                     sBody.appendChild(tr);
                 });
-                document.getElementById('best-month-label').innerText = best + " (" + cur(max) + ")";
             });
         }
 
-        // --- FUNCIONES DE MANDO ---
-        async function masterReset() {
-            const pass = prompt("PARA RESETEAR ESCRIBA 777:");
-            if(pass === "777") {
-                if(confirm("¡ADVERTENCIA! Se borrará todo. ¿Proceder?")) {
-                    await db.ref('jc_elite_v130').remove();
-                    alert("SISTEMA EN CERO");
-                }
-            } else { alert("CLAVE INCORRECTA"); }
+        async function cerrarCaja() {
+            if(confirm(`¿Cerrar caja con ${cur(netCash)} en efectivo?`)) {
+                const h = new Date().toISOString().split('T')[0];
+                await db.ref('jc_elite_v130/cierres').push({ f: h, monto: netCash });
+                alert("CAJA CERRADA EXITOSAMENTE");
+            }
         }
 
         function openModal(c) {
@@ -312,13 +305,6 @@
             document.getElementById('m-saldo').innerText = cur(c.saldo);
             document.getElementById('m-cuota').innerText = cur(c.cuotaVal);
             document.getElementById('m-input-pay').value = Math.min(c.cuotaVal, c.saldo);
-            
-            const log = document.getElementById('m-history');
-            log.innerHTML = '<label style="font-size:9px; color:var(--gold);">ÚLTIMOS MOVIMIENTOS</label>';
-            if(c.pagos) Object.values(c.pagos).reverse().slice(0,3).forEach(p => {
-                log.innerHTML += `<div style="display:flex; justify-content:space-between; margin-top:10px; font-size:12px;"><span>${p.f}</span><span style="color:var(--success); font-weight:800">${cur(p.m)}</span></div>`;
-            });
-
             document.getElementById('modal-master').style.display = "flex";
         }
 
@@ -326,38 +312,23 @@
 
         async function executePay() {
             const v = parseFloat(document.getElementById('m-input-pay').value);
-            if(!v || v > activeData.saldo) return alert("MONTO INVÁLIDO");
             const h = new Date().toISOString().split('T')[0];
             await db.ref(`jc_elite_v130/clientes/${activeID}`).update({ saldo: activeData.saldo - v, u_f: h });
-            await db.ref(`jc_elite_v130/clientes/${activeID}/pagos`).push({ f: h, m: v, t: new Date().toLocaleTimeString() });
+            await db.ref(`jc_elite_v130/clientes/${activeID}/pagos`).push({ f: h, m: v });
             closeModal();
-        }
-
-        async function renewC() {
-            const n = prompt("Nuevo Capital:", activeData.capital);
-            if(!n) return;
-            const tot = n * 1.2;
-            await db.ref(`jc_elite_v130/clientes/${activeID}`).update({ saldo: tot, u_f: "", pagos: null });
-            alert("CLIENTE RENOVADO"); closeModal();
-        }
-
-        async function deleteC() {
-            if(confirm("¿ELIMINAR CLIENTE?")) { await db.ref(`jc_elite_v130/clientes/${activeID}`).remove(); closeModal(); }
         }
 
         async function saveNew() {
             const n = document.getElementById('add-name').value, c = parseFloat(document.getElementById('add-cap').value);
             const p = parseFloat(document.getElementById('add-days').value), d = document.getElementById('add-day').value, z = document.getElementById('add-zone').value;
-            if(!n || !c) return;
-            const tot = c * 1.2, cV = Math.ceil(tot/p), id = Date.now();
-            await db.ref('jc_elite_v130/clientes/'+id).set({ id, nombre: n, capital: c, saldo: tot, cuotaVal: cV, plazo: p, dia: d, barrio: z, u_f: "" });
+            const tot = c * 1.2, id = Date.now();
+            await db.ref('jc_elite_v130/clientes/'+id).set({ id, nombre: n, capital: c, saldo: tot, cuotaVal: Math.ceil(tot/p), plazo: p, dia: d, barrio: z, u_f: "" });
             alert("CONTRATO REGISTRADO"); tab('ruta', document.querySelectorAll('.dock-tab')[0]);
         }
 
         async function saveGasto() {
             const d = document.getElementById('ex-desc').value, a = parseFloat(document.getElementById('ex-amt').value);
-            if(!d || !a) return;
-            await db.ref('jc_elite_v130/gastos').push({ d, m: a, f: new Date().toISOString().split('T')[0], t: new Date().toLocaleTimeString() });
+            await db.ref('jc_elite_v130/gastos').push({ d, m: a, f: new Date().toISOString().split('T')[0] });
             alert("GASTO GUARDADO");
         }
 
@@ -370,15 +341,12 @@
 
         function exportData() {
             db.ref('jc_elite_v130').once('value', s => {
-                const data = JSON.stringify(s.val(), null, 2);
-                const blob = new Blob([data], {type: 'application/json'});
-                const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
-                a.href = url; a.download = `JC_BACKUP_${new Date().toLocaleDateString()}.json`;
-                a.click();
+                a.href = URL.createObjectURL(new Blob([JSON.stringify(s.val())], {type: 'application/json'}));
+                a.download = `JC_ELITE_BACKUP.json`; a.click();
             });
         }
-
+        
         render();
     </script>
 </body>
