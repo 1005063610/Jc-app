@@ -8,6 +8,9 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
@@ -136,16 +139,16 @@
         </div>
         
         <div class="card boss-only-ui" style="border-top: 3px solid var(--oro-oscuro);">
-            <h3 style="font-size:11px; color:var(--oro-oscuro); margin-bottom:10px;">HISTORIAL Y REPORTES</h3>
+            <h3 style="font-size:11px; color:var(--oro-oscuro); margin-bottom:10px;">GENERAR REPORTE PDF</h3>
             <div class="group">
-                <label>Exportar Datos de:</label>
+                <label>Periodo del Historial:</label>
                 <select id="export-range">
                     <option value="7">Última Semana</option>
                     <option value="30">Último Mes</option>
                     <option value="365">Todo el Año</option>
                 </select>
             </div>
-            <button class="btn-gold" style="height: 45px; font-size: 11px;" onclick="exportHistory()">Descargar Excel (CSV)</button>
+            <button class="btn-gold" style="height: 45px; font-size: 11px;" onclick="exportPDF()">Descargar Reporte Supreme (PDF)</button>
         </div>
 
         <div class="card">
@@ -234,7 +237,6 @@
         let day = diasSemana[fechaHoy.getDay()]; 
         let boss = false, sId, sSal, sCap, sStart = null, allCls = {};
         
-        // Flags de Ordenamiento
         let sortClsAsc = true;
         let sortHistNewest = true;
 
@@ -263,7 +265,6 @@
             render(); 
         }
 
-        // Toggles de Ordenamiento
         function toggleSortCls() {
             sortClsAsc = !sortClsAsc;
             const icon = document.getElementById('sort-icon-cls');
@@ -320,7 +321,6 @@
                     }
                 });
 
-                // Ordenar Clientes (Nombre)
                 list.sort((a,b) => {
                     if (a.vencido !== b.vencido) return b.vencido - a.vencido;
                     return sortClsAsc ? a.nombre.localeCompare(b.nombre) : b.nombre.localeCompare(a.nombre);
@@ -353,7 +353,6 @@
                     container.appendChild(div);
                 });
 
-                // Ordenar y Renderizar Historial
                 historyList.sort((a, b) => sortHistNewest ? b.time - a.time : a.time - b.time);
                 const histCont = document.getElementById('hist-recaudo');
                 histCont.innerHTML = "";
@@ -373,31 +372,50 @@
             });
         }
 
-        function exportHistory() {
+        // --- NUEVA FUNCIÓN PDF SUPREME ---
+        function exportPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
             const range = parseInt(document.getElementById('export-range').value);
             const limit = Date.now() - (range * 24 * 60 * 60 * 1000);
-            let csv = "Fecha,Cliente,Tipo,Monto,Concepto\n";
+            
+            // Estilo de Cabecera
+            doc.setFillColor(166, 124, 0); // Color Oro
+            doc.rect(0, 0, 210, 40, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(22);
+            doc.setFont("helvetica", "bold");
+            doc.text("JC SUPREME ELITE", 105, 20, null, null, "center");
+            doc.setFontSize(10);
+            doc.text("REPORTE DE MOVIMIENTOS - GOLD EDITION", 105, 30, null, null, "center");
 
+            // Datos de la tabla
+            let rows = [];
             Object.values(allCls).forEach(c => {
                 if(c.pagos) {
                     Object.values(c.pagos).forEach(p => {
-                        if(p.t >= limit) csv += `${p.f},${c.nombre},PAGO,${p.m},Cobro Diario\n`;
+                        if(p.t >= limit) rows.push([p.f, c.nombre, 'COBRO', cur(p.m), c.barrio || '-']);
                     });
                 }
                 if(new Date(c.f_crea).getTime() >= limit) {
-                    csv += `${c.f_crea},${c.nombre},NUEVO,-${c.capital},Prestamo Inicial\n`;
+                    rows.push([c.f_crea, c.nombre, 'NUEVO', `-${cur(c.capital)}`, 'Préstamo Inicial']);
                 }
             });
 
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.setAttribute('hidden', '');
-            a.setAttribute('href', url);
-            a.setAttribute('download', `JC_Elite_Reporte_${new Date().toLocaleDateString()}.csv`);
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            // Ordenar por fecha descendente
+            rows.sort((a, b) => new Date(b[0]) - new Date(a[0]));
+
+            doc.autoTable({
+                startY: 50,
+                head: [['Fecha', 'Cliente', 'Tipo', 'Monto', 'Concepto/Barrio']],
+                body: rows,
+                headStyles: { fillColor: [138, 109, 59], textColor: [255, 255, 255] },
+                alternateRowStyles: { fillColor: [245, 245, 245] },
+                margin: { top: 50 },
+                styles: { fontSize: 9 }
+            });
+
+            doc.save(`Reporte_JC_Supreme_${new Date().toISOString().split('T')[0]}.pdf`);
         }
 
         setInterval(() => {
