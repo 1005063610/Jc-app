@@ -3,353 +3,452 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>JC ELITE V130 - SISTEMA PROFESIONAL</title>
+    <title>JC SUPREME ELITE - GOLD EDITION</title>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Syncopate:wght@700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <style>
         :root {
-            --bg: #010204; --surface: #0a0b14; --card: #12141d; --gold: #d4af37;
-            --gold-glow: rgba(212, 175, 55, 0.4); --text: #ffffff; --text-dim: #6b7280;
-            --success: #00ffa3; --danger: #ff3131; --warning: #ffb800;
+            --perla: #fcfcfc;
+            --oro-grad: linear-gradient(135deg, #a67c00 0%, #bf953f 20%, #fcf6ba 45%, #b38728 70%, #aa771c 100%);
+            --oro-brillante: #d4af37;
+            --oro-oscuro: #8a6d3b;
+            --rojo-neon: #ff003c;
+            --verde-oro: #1b4332;
+            --shadow-gold: 0 8px 32px rgba(184, 134, 11, 0.15);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); color: var(--text); overflow-x: hidden; min-height: 100vh; padding-bottom: 120px; }
-
-        /* HEADER */
-        .master-header {
-            position: sticky; top: 0; z-index: 9999; height: 100px;
-            background: rgba(1, 2, 4, 0.95); backdrop-filter: blur(20px);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            border-bottom: 1px solid var(--gold-glow);
-        }
-        .jc-logo { font-family: 'Syncopate', sans-serif; font-size: 26px; color: var(--gold); letter-spacing: 8px; }
-        .auth-zone { position: absolute; right: 15px; top: 15px; }
-        .token-field { background: #000; border: 1px solid var(--gold); border-radius: 8px; color: var(--gold); width: 65px; padding: 6px; text-align: center; font-size: 11px; font-weight: 800; }
-
-        /* NAVEGACIÓN DÍAS */
-        .day-scroller { background: var(--bg); padding: 15px 0; display: flex; gap: 8px; overflow-x: auto; padding-left: 15px; }
-        .day-scroller::-webkit-scrollbar { display: none; }
-        .day-btn { flex: 0 0 auto; padding: 14px 20px; border-radius: 14px; background: var(--card); border: 1px solid rgba(255,255,255,0.05); color: var(--text-dim); font-size: 11px; font-weight: 800; text-transform: uppercase; transition: 0.3s; }
-        .day-btn.active { background: var(--gold); color: #000; border-color: var(--gold); box-shadow: 0 4px 15px var(--gold-glow); }
-
-        /* CONTENEDORES DE VISTA */
-        .view-pane { display: none; padding: 0 15px; }
-        .view-pane.active { display: block; animation: fadeIn 0.4s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* TARJETAS DE ESTADÍSTICAS */
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 15px 0; }
-        .stat-card { background: var(--surface); padding: 18px; border-radius: 22px; border: 1px solid rgba(255,255,255,0.05); }
-        .stat-card.full { grid-column: span 2; border-color: var(--gold-glow); }
-        .stat-card label { display: block; font-size: 9px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; margin-bottom: 6px; letter-spacing: 1px; }
-        .stat-card .val { font-size: 20px; font-weight: 800; color: #fff; }
-
-        /* LISTA DE CLIENTES */
-        .item-card { background: var(--surface); padding: 20px; border-radius: 22px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.03); transition: 0.2s; }
-        .item-card:active { transform: scale(0.97); background: var(--card); }
-        .item-card.completed { border-left: 6px solid var(--success); opacity: 0.5; }
-        .item-info h3 { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
-        .item-info p { font-size: 12px; color: var(--text-dim); }
-        .item-right { text-align: right; }
-        .item-right .price { font-size: 17px; font-weight: 800; color: var(--gold); display: block; }
-        .item-right .sub { font-size: 11px; color: var(--success); font-weight: 700; }
-
-        /* CIERRE DE CAJA */
-        .box-title { font-size: 12px; font-weight: 800; color: var(--gold); text-transform: uppercase; margin: 20px 0 10px 5px; letter-spacing: 1px; }
-        .cash-container { background: #000; border-radius: 28px; padding: 25px; border: 1px solid var(--gold-glow); }
-        .cash-row { display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 15px; }
-        .cash-row.total { border-top: 1px dashed rgba(212, 175, 55, 0.3); padding-top: 20px; margin-top: 10px; font-size: 24px; font-weight: 800; color: var(--success); }
-        .history-box { background: var(--surface); border-radius: 20px; padding: 10px 20px; border: 1px solid rgba(255,255,255,0.05); }
-        .history-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; }
-
-        /* INPUTS */
-        .input-group { margin-bottom: 20px; }
-        .input-group label { display: block; font-size: 10px; font-weight: 800; color: var(--gold); text-transform: uppercase; margin-bottom: 10px; margin-left: 5px; }
-        .input-group input, .input-group select { width: 100%; height: 65px; background: var(--surface); border: 1px solid rgba(255,255,255,0.1); border-radius: 18px; color: #fff; padding: 0 20px; font-size: 18px; font-weight: 700; outline: none; }
-        .input-group input:focus { border-color: var(--gold); }
         
-        .btn-main { width: 100%; height: 70px; background: var(--gold); color: #000; border: none; border-radius: 22px; font-weight: 800; font-size: 16px; text-transform: uppercase; margin-top: 10px; box-shadow: 0 8px 20px rgba(0,0,0,0.4); }
+        body { background: var(--perla); color: #1a1a1a; height: 100vh; overflow: hidden; position: fixed; width: 100vw; }
 
-        /* DOCK */
-        .dock { position: fixed; bottom: 20px; left: 5%; width: 90%; height: 85px; background: rgba(10, 11, 20, 0.96); backdrop-filter: blur(20px); border-radius: 35px; border: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-around; align-items: center; z-index: 9999; }
-        .dock-tab { border: none; background: none; color: var(--text-dim); display: flex; flex-direction: column; align-items: center; gap: 5px; transition: 0.3s; }
-        .dock-tab.active { color: var(--gold); transform: translateY(-5px); }
-        .dock-tab i { font-size: 24px; }
-        .dock-tab span { font-size: 10px; font-weight: 800; }
+        .header {
+            height: 90px; background: #fff; border-bottom: 3px solid var(--oro-brillante);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            position: fixed; top: 0; width: 100%; z-index: 2000; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .logo { 
+            font-family: 'Syncopate', sans-serif; font-size: 16px; letter-spacing: 4px;
+            background: var(--oro-grad); 
+            -webkit-background-clip: text; 
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+        #timer { font-size: 10px; font-weight: 800; color: #888; margin-top: 5px; }
+        .pin-box { position: absolute; right: 15px; width: 55px; border: 1px solid var(--oro-brillante); border-radius: 8px; padding: 5px; background: #f9f9f9; text-align: center; font-size: 10px; outline: none; }
 
-        /* MODALES */
-        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10001; display: none; align-items: flex-end; }
-        .sheet { background: var(--surface); width: 100%; border-radius: 40px 40px 0 0; padding: 40px 25px; border-top: 4px solid var(--gold); animation: slideUp 0.3s ease-out; }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .day-nav {
+            position: fixed; top: 90px; width: 100%; height: 60px; background: #fff;
+            display: flex; gap: 10px; overflow-x: auto; padding: 12px; z-index: 1000;
+            border-bottom: 1px solid #eee;
+        }
+        .day-nav::-webkit-scrollbar { display: none; }
+        .day-btn { flex: 0 0 auto; padding: 8px 18px; border-radius: 20px; border: 1px solid #eee; background: #f5f5f5; font-size: 10px; font-weight: 800; color: #777; transition: 0.3s; }
+        .day-btn.active { background: var(--oro-grad); color: #fff; border: none; box-shadow: var(--shadow-gold); }
 
-        .boss-only { display: none !important; }
-        .is-boss .boss-only { display: block !important; }
+        .search-container { position: sticky; top: 0; background: var(--perla); padding: 10px 0; z-index: 900; display: flex; gap: 8px; }
+        .search-input { flex: 1; height: 45px; border-radius: 12px; border: 1.5px solid var(--oro-brillante); padding: 0 15px; font-size: 14px; background: #fff; outline: none; }
+        .sort-toggle { width: 45px; height: 45px; border-radius: 12px; border: 1.5px solid var(--oro-brillante); background: #fff; color: var(--oro-oscuro); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+
+        .view-pane {
+            position: absolute; top: 150px; bottom: 85px; width: 100%;
+            overflow-y: auto; padding: 20px; display: none;
+            -webkit-overflow-scrolling: touch;
+        }
+        #view-ruta { display: block; }
+
+        .card {
+            background: #fff; border-radius: 20px; padding: 20px; margin-bottom: 15px;
+            border: 1px solid #eee; box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            position: relative; transition: 0.3s;
+        }
+        .card.vencido { border: 2.5px solid var(--rojo-neon); background: #fff9f9; box-shadow: 0 0 15px rgba(255, 0, 60, 0.1); }
+        .tag-vencido { position: absolute; top: 0; right: 0; background: var(--rojo-neon); color: #fff; font-size: 9px; font-weight: 900; padding: 5px 12px; border-bottom-left-radius: 15px; animation: blink 1.5s infinite; }
+        @keyframes blink { 50% { opacity: 0.6; } }
+
+        .c-title { font-size: 18px; font-weight: 800; color: var(--oro-oscuro); text-transform: uppercase; margin-bottom: 4px; }
+        .c-meta { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: #555; }
+        .c-val { color: var(--oro-brillante); font-weight: 800; font-size: 14px; }
+
+        .boss-controls { display: none; gap: 8px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #f0f0f0; }
+        .is-boss .boss-controls { display: flex; }
+        .b-btn { flex: 1; padding: 10px; border-radius: 10px; font-size: 9px; font-weight: 800; border: 1.5px solid; background: none; text-transform: uppercase; }
+        .b-del { border-color: var(--rojo-neon); color: var(--rojo-neon); }
+        .b-amp { border-color: #f39c12; color: #f39c12; }
+        .b-ren { border-color: var(--verde-oro); color: var(--verde-oro); }
+
+        .group { margin-bottom: 15px; }
+        .group label { display: block; font-size: 10px; color: var(--oro-oscuro); font-weight: 800; margin-bottom: 6px; text-transform: uppercase; }
+        .group input, .group select { width: 100%; height: 52px; background: #fff; border: 1.5px solid #ddd; border-radius: 12px; padding: 0 15px; font-size: 16px; outline: none; }
+        
+        .btn-gold { width: 100%; height: 60px; background: var(--oro-grad); color: #fff; border: none; border-radius: 15px; font-weight: 800; font-size: 14px; text-transform: uppercase; box-shadow: var(--shadow-gold); }
+
+        .dock { position: fixed; bottom: 0; width: 100%; height: 85px; background: #fff; border-top: 1px solid #eee; display: flex; align-items: center; justify-content: space-around; z-index: 2000; padding-bottom: 10px; }
+        .tab { background: none; border: none; color: #bbb; display: flex; flex-direction: column; align-items: center; gap: 5px; flex: 1; }
+        .tab.active { color: var(--oro-oscuro); }
+        .tab i { font-size: 20px; }
+        .tab span { font-size: 9px; font-weight: 800; text-transform: uppercase; }
+
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); display: none; align-items: center; padding: 25px; z-index: 3000; }
+        .sheet { background: #fff; width: 100%; border-radius: 25px; padding: 30px; border-top: 6px solid var(--oro-brillante); box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+
+        .boss-only-ui { display: none !important; }
+        .is-boss .boss-only-ui { display: flex !important; }
     </style>
 </head>
-<body id="jc-app">
+<body>
 
-    <header class="master-header">
-        <div class="jc-logo">JC ELITE</div>
-        <div class="auth-zone"><input type="password" class="token-field" placeholder="TOKEN" onkeyup="checkBoss(this.value)"></div>
+    <header class="header">
+        <div class="logo">JC SUPREME ELITE</div>
+        <div id="timer">ESPERANDO INICIO...</div>
+        <input type="password" class="pin-box" placeholder="PIN" onkeyup="checkBoss(this.value)">
     </header>
 
-    <nav class="day-scroller" id="day-bar">
-        <button class="day-btn active" onclick="setDay('Lunes', this)">Lun</button>
-        <button class="day-btn" onclick="setDay('Martes', this)">Mar</button>
-        <button class="day-btn" onclick="setDay('Miercoles', this)">Mie</button>
-        <button class="day-btn" onclick="setDay('Jueves', this)">Jue</button>
-        <button class="day-btn" onclick="setDay('Viernes', this)">Vie</button>
-        <button class="day-btn" onclick="setDay('Sabado', this)">Sab</button>
-        <button class="day-btn" onclick="setDay('Domingo', this)">Dom</button>
+    <nav class="day-nav" id="day-bar">
+        <button class="day-btn" id="btn-Lun" onclick="setD('Lunes', this)">Lun</button>
+        <button class="day-btn" id="btn-Mar" onclick="setD('Martes', this)">Mar</button>
+        <button class="day-btn" id="btn-Mie" onclick="setD('Miercoles', this)">Mie</button>
+        <button class="day-btn" id="btn-Jue" onclick="setD('Jueves', this)">Jue</button>
+        <button class="day-btn" id="btn-Vie" onclick="setD('Viernes', this)">Vie</button>
+        <button class="day-btn" id="btn-Sab" onclick="setD('Sabado', this)">Sab</button>
+        <button class="day-btn" id="btn-Dom" onclick="setD('Domingo', this)">Dom</button>
     </nav>
 
-    <main id="view-ruta" class="view-pane active">
-        <div class="stats-grid">
-            <div class="stat-card"><label>Cobrado Hoy</label><span id="st-cobro-hoy" class="val" style="color:var(--success)">$ 0</span></div>
-            <div class="stat-card"><label>Pendiente Ruta</label><span id="st-pend-hoy" class="val" style="color:var(--warning)">$ 0</span></div>
+    <main id="view-ruta" class="view-pane">
+        <div class="search-container">
+            <input type="text" class="search-input" id="search" placeholder=" Buscar..." oninput="render()">
+            <button class="sort-toggle" onclick="toggleSortCls()"><i id="sort-icon-cls" class="fa-solid fa-arrow-down-z-a"></i></button>
         </div>
-        <div id="render-list"></div>
+        <div id="render-ruta"></div>
     </main>
 
-    <main id="view-cierre" class="view-pane">
-        <div class="input-group boss-only" style="margin-top:20px;">
-            <label>Base Entregada al Cobrador ($)</label>
-            <input type="number" id="base-val" onchange="updateBase(this.value)">
+    <main id="view-stats" class="view-pane">
+        <div class="card" style="border-left: 6px solid var(--oro-brillante)">
+            <h3 style="font-size:11px; color:var(--oro-oscuro); margin-bottom:15px;">MÉTRICAS DE CARTERA</h3>
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span>Capital Neto:</span> <b id="st-cap">$ 0</b></div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span>Interés Ganado:</span> <b id="st-int">$ 0</b></div>
+            <div style="display:flex; justify-content:space-between; color:var(--verde-oro); border-top:1px solid #eee; padding-top:10px;"><span>SALDO TOTAL EN CALLE:</span> <b id="st-tot">$ 0</b></div>
+        </div>
+        
+        <div class="card boss-only-ui" style="border-top: 3px solid var(--oro-oscuro);">
+            <h3 style="font-size:11px; color:var(--oro-oscuro); margin-bottom:10px;">HISTORIAL Y REPORTES</h3>
+            <div class="group">
+                <label>Exportar Datos de:</label>
+                <select id="export-range">
+                    <option value="7">Última Semana</option>
+                    <option value="30">Último Mes</option>
+                    <option value="365">Todo el Año</option>
+                </select>
+            </div>
+            <button class="btn-gold" style="height: 45px; font-size: 11px;" onclick="exportHistory()">Descargar Excel (CSV)</button>
         </div>
 
-        <div class="box-title">Calculadora de Efectivo Real</div>
-        <div class="cash-container">
-            <div class="cash-row"><span>(+) Base inicial:</span> <span id="cj-base" style="color:var(--success)">$ 0</span></div>
-            <div class="cash-row"><span>(+) Recaudos del día:</span> <span id="cj-recaudo" style="color:var(--success)">$ 0</span></div>
-            <div class="cash-row"><span>(-) Gastos:</span> <span id="cj-gastos" style="color:var(--danger)">$ 0</span></div>
-            <div class="cash-row"><span>(-) Préstamos nuevos:</span> <span id="cj-prestado" style="color:var(--danger)">$ 0</span></div>
-            <div class="cash-row total"><span>SALDO EN CAJA:</span> <span id="cj-final">$ 0</span></div>
-        </div>
-
-        <div class="box-title">Detalle de Cobros de Hoy</div>
-        <div id="historial-cobros" class="history-box"></div>
-    </main>
-
-    <main id="view-stats" class="view-pane boss-only">
-        <div class="stats-grid" style="margin-top:20px;">
-            <div class="stat-card full"><label>Capital Total en la Calle</label><span id="mst-calle" class="val" style="color:var(--gold); font-size:28px;">$ 0</span></div>
-            <div class="stat-card"><label>Inversión Neta</label><span id="mst-inv" class="val">$ 0</span></div>
-            <div class="stat-card"><label>Utilidad Proyectada</label><span id="mst-util" class="val" style="color:var(--success)">$ 0</span></div>
-            <div class="stat-card"><label>Clientes Activos</label><span id="mst-count" class="val">0</span></div>
-            <div class="stat-card"><label>Promedio Cuota</label><span id="mst-avg" class="val">$ 0</span></div>
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h3 style="font-size:11px; color:var(--oro-oscuro);">HISTORIAL DE COBROS HOY</h3>
+                <button onclick="toggleSortHist()" style="background:none; border:none; color:var(--oro-brillante); font-size:14px;"><i id="sort-icon-hist" class="fa-solid fa-clock-rotate-left"></i></button>
+            </div>
+            <div id="hist-recaudo"></div>
         </div>
     </main>
 
     <main id="view-gastos" class="view-pane">
-        <div class="input-group" style="margin-top:20px;"><label>Motivo del Gasto</label><input type="text" id="gs-desc" placeholder="Ej: Gasolina, Almuerzo"></div>
-        <div class="input-group"><label>Valor Pagado ($)</label><input type="number" id="gs-val"></div>
-        <button class="btn-main" style="background:var(--danger); color:#fff" onclick="addGasto()">Registrar Salida</button>
+        <div class="card">
+            <div class="group"><label>Concepto del Gasto</label><input type="text" id="g-desc"></div>
+            <div class="group"><label>Monto Retirado ($)</label><input type="number" id="g-monto"></div>
+            <button class="btn-gold" onclick="saveG()">Registrar Gasto</button>
+        </div>
     </main>
 
-    <main id="view-admin" class="view-pane">
-        <div class="input-group" style="margin-top:20px;"><label>Nombre Completo</label><input type="text" id="nw-name"></div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-            <div class="input-group"><label>Capital $</label><input type="number" id="nw-cap"></div>
-            <div class="input-group"><label>% Interés</label><input type="number" id="nw-int" value="20"></div>
+    <main id="view-nuevo" class="view-pane">
+        <div class="card">
+            <div class="group"><label>Nombre del Cliente</label><input type="text" id="n-nom"></div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div class="group"><label>Capital</label><input type="number" id="n-monto"></div>
+                <div class="group"><label>Interés %</label><input type="number" id="n-porcent" value="20"></div>
+            </div>
+            <div class="group"><label>Plazo (Días)</label><input type="number" id="n-plazo" value="24"></div>
+            <div class="group"><label>Barrio</label><input type="text" id="n-bar"></div>
+            <button class="btn-gold" onclick="saveN()">Activar Supreme Gold</button>
         </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-            <div class="input-group"><label>Días Plazo</label><input type="number" id="nw-days" value="24"></div>
-            <div class="input-group"><label>Día de Cobro</label>
-                <select id="nw-day">
-                    <option>Lunes</option><option>Martes</option><option>Miercoles</option>
-                    <option>Jueves</option><option>Viernes</option><option>Sabado</option><option>Domingo</option>
-                </select>
+    </main>
+
+    <main id="view-cierre" class="view-pane">
+        <div class="card" style="text-align: center;">
+            <p style="font-size:10px; font-weight:800; color:var(--oro-oscuro)">ENTREGA FINAL DE EFECTIVO</p>
+            <h1 id="cj-total" style="font-size:38px; margin:15px 0; color:var(--verde-oro)">$ 0</h1>
+            <div style="text-align:left; border-top:1px solid #eee; padding-top:15px; font-size:12px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px;"><span>(+) Base Inicial:</span> <b id="cj-base">$ 0</b></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px;"><span>(+) Recaudo Hoy:</span> <b id="cj-rec">$ 0</b></div>
+                <div style="display:flex; justify-content:space-between; color:var(--rojo-neon)"><span>(-) Gastos + Nuevos:</span> <b id="cj-out">$ 0</b></div>
             </div>
         </div>
-        <div class="input-group"><label>Barrio / Ubicación</label><input type="text" id="nw-barrio"></div>
-        <button class="btn-main" onclick="addNew()">Entregar Dinero</button>
+        <div class="card"><div class="group"><label>Ajustar Base del Día</label><input type="number" id="set-base" onchange="upBase(this.value)"></div></div>
+        <button class="btn-gold" style="background:white; color:red; border:2.5px solid red; box-shadow:none;" onclick="nuke()">NUKE: BORRAR TODA LA BASE DE DATOS</button>
     </main>
 
-    <div class="overlay" id="pop-pay">
+    <nav class="dock">
+        <button class="tab active" onclick="sw('ruta', this)"><i class="fa-solid fa-map-location-dot"></i><span>Ruta</span></button>
+        <button class="tab" onclick="sw('stats', this)"><i class="fa-solid fa-chart-line"></i><span>Stats</span></button>
+        <button class="tab" onclick="sw('gastos', this)"><i class="fa-solid fa-wallet"></i><span>Gastos</span></button>
+        <button class="tab boss-only-ui" onclick="sw('nuevo', this)"><i class="fa-solid fa-plus-circle"></i><span>Nuevo</span></button>
+        <button class="tab boss-only-ui" onclick="sw('cierre', this)"><i class="fa-solid fa-vault"></i><span>Caja</span></button>
+    </nav>
+
+    <div class="modal" id="mod-p">
         <div class="sheet">
-            <h2 id="pop-name" style="text-align:center; margin-bottom:25px; font-weight:800;">---</h2>
-            <div class="input-group"><label>Monto a cobrar</label><input type="number" id="pop-input"></div>
-            <button class="btn-main" onclick="confirmPay()">Confirmar Recaudo</button>
-            <button class="btn-main" style="background:transparent; color:var(--text-dim); margin-top:15px;" onclick="closePop()">Cancelar</button>
+            <h2 id="p-nom" style="color:var(--oro-oscuro); margin-bottom:20px;">-</h2>
+            <div class="group"><label>Monto a Abonar</label><input type="number" id="p-val"></div>
+            <button class="btn-gold" onclick="confirmP()">Registrar Cobro</button>
+            <button onclick="closeM()" style="width:100%; margin-top:20px; border:none; background:none; color:#aaa; font-weight:800;">VOLVER</button>
         </div>
     </div>
 
-    <nav class="dock">
-        <button class="dock-tab active" onclick="tab('ruta', this)"><i class="fa-solid fa-route"></i><span>Ruta</span></button>
-        <button class="dock-tab" onclick="tab('cierre', this)"><i class="fa-solid fa-cash-register"></i><span>Caja</span></button>
-        <button class="dock-tab boss-only" onclick="tab('stats', this)"><i class="fa-solid fa-chart-pie"></i><span>Stats</span></button>
-        <button class="dock-tab" onclick="tab('gastos', this)"><i class="fa-solid fa-wallet"></i><span>Gastos</span></button>
-        <button class="dock-tab boss-only" onclick="tab('admin', this)"><i class="fa-solid fa-circle-plus"></i><span>Nuevo</span></button>
-    </nav>
+    <div class="modal" id="mod-amp">
+        <div class="sheet">
+            <h2 id="amp-nom" style="color:var(--oro-brillante); margin-bottom:20px;">AMPLIAR CUPO</h2>
+            <div class="group"><label>Nuevo Capital Extra</label><input type="number" id="amp-plus"></div>
+            <div class="group"><label>Interés %</label><input type="number" id="amp-int" value="20"></div>
+            <div class="group"><label>Nuevo Plazo (Días)</label><input type="number" id="amp-d" value="24"></div>
+            <button class="btn-gold" onclick="confirmAmp()">Refinanciar Supreme</button>
+            <button onclick="closeM()" style="width:100%; margin-top:20px; border:none; background:none; color:#aaa;">CANCELAR</button>
+        </div>
+    </div>
 
     <script>
         const firebaseConfig = {
-            apiKey: "AIzaSyCRNI3MwglHZfmCyRTv3xrxnuOe73yafNU",
-            authDomain: "jc-elite.firebaseapp.com",
-            databaseURL: "https://jc-elite-default-rtdb.firebaseio.com",
-            projectId: "jc-elite",
-            appId: "1:183298625822:web:f7f0a7087600cffbb8b90f"
+            apiKey: "AIzaSyBPhzuq4XJA7PyBqTY7mBk2kmfbI5SFmhc",
+            databaseURL: "https://jc-elite-v130-default-rtdb.firebaseio.com",
+            projectId: "jc-elite-v130"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let selDay = "Lunes", isBoss = false, actID = null, actSal = 0;
-        const fmt = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(v);
+        const diasSemana = ["Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"];
+        const fechaHoy = new Date();
+        let day = diasSemana[fechaHoy.getDay()]; 
+        let boss = false, sId, sSal, sCap, sStart = null, allCls = {};
+        
+        // Flags de Ordenamiento
+        let sortClsAsc = true;
+        let sortHistNewest = true;
 
-        function checkBoss(v) {
-            isBoss = (v.toUpperCase() === "JC7");
-            document.body.classList.toggle('is-boss', isBoss);
+        const cur = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(v);
+
+        document.getElementById('btn-' + day.substring(0,3)).classList.add('active');
+
+        function checkBoss(v) { 
+            boss = (v.toUpperCase() === "JC7"); 
+            document.body.classList.toggle('is-boss', boss); 
+            render(); 
+        }
+
+        function sw(t, b) {
+            document.querySelectorAll('.view-pane').forEach(v => v.style.display = 'none');
+            document.getElementById('view-' + t).style.display = 'block';
+            document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+            b.classList.add('active');
+            document.getElementById('day-bar').style.display = (t === 'ruta') ? 'flex' : 'none';
+        }
+
+        function setD(d, b) { 
+            day = d; 
+            document.querySelectorAll('.day-btn').forEach(x => x.classList.remove('active')); 
+            b.classList.add('active'); 
+            render(); 
+        }
+
+        // Toggles de Ordenamiento
+        function toggleSortCls() {
+            sortClsAsc = !sortClsAsc;
+            const icon = document.getElementById('sort-icon-cls');
+            icon.className = sortClsAsc ? "fa-solid fa-arrow-down-a-z" : "fa-solid fa-arrow-down-z-a";
             render();
         }
 
-        function setDay(d, btn) {
-            selDay = d;
-            document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+        function toggleSortHist() {
+            sortHistNewest = !sortHistNewest;
+            const icon = document.getElementById('sort-icon-hist');
+            icon.className = sortHistNewest ? "fa-solid fa-clock-rotate-left" : "fa-solid fa-history";
             render();
-        }
-
-        async function updateBase(v) {
-            const h = new Date().toISOString().split('T')[0];
-            await db.ref(`jc_v130/config/base/${h}`).set(parseFloat(v) || 0);
         }
 
         function render() {
             const h = new Date().toISOString().split('T')[0];
-            const list = document.getElementById('render-list');
-            const hist = document.getElementById('historial-cobros');
+            const query = document.getElementById('search').value.toLowerCase();
 
             db.ref('jc_v130').on('value', snap => {
                 const data = snap.val() || {};
                 const cls = data.clientes || {};
+                allCls = cls;
                 const gts = data.gastos || {};
-                const base = (data.config && data.config.base) ? (data.config.base[h] || 0) : 0;
+                const base = data.config?.base?.[h] || 0;
 
-                let cHoy = 0, gHoy = 0, pHoy = 0, tCalle = 0, pRuta = 0;
-                let tInv = 0, tCount = 0;
-
-                list.innerHTML = ""; hist.innerHTML = "";
+                let rHoy = 0, gHoy = 0, nHoy = 0, capCalle = 0, salCalle = 0;
+                let list = [];
+                let historyList = [];
 
                 Object.values(cls).forEach(c => {
-                    if (c.saldo > 0) {
-                        tCalle += c.saldo;
-                        tInv += parseFloat(c.capital);
-                        tCount++;
-                    }
+                    capCalle += parseFloat(c.capital || 0);
+                    salCalle += parseFloat(c.saldo || 0);
 
-                    // Historial y Cobros de hoy
-                    if (c.pagos) {
+                    if(c.pagos) {
                         Object.values(c.pagos).forEach(p => {
-                            if (p.f === h) {
-                                cHoy += p.m;
-                                hist.innerHTML += `<div class="history-row"><span>${c.nombre}</span><span style="color:var(--success); font-weight:800">+ ${fmt(p.m)}</span></div>`;
+                            if(p.f === h) {
+                                rHoy += p.m;
+                                if(!sStart || p.t < sStart) sStart = p.t;
+                                historyList.push({ name: c.nombre, amount: p.m, time: p.t });
                             }
                         });
                     }
 
-                    // Préstamos nuevos de hoy
-                    if (c.f_crea === h) pHoy += parseFloat(c.capital);
+                    if(c.f_crea === h) nHoy += parseFloat(c.capital);
 
-                    // Filtro de Ruta por Día
-                    if (c.saldo > 0 && c.dia === selDay) {
-                        const done = (c.u_f === h);
-                        if (!done) pRuta += c.cuota;
+                    const fI = new Date(c.f_crea);
+                    const hoy = new Date();
+                    const diff = Math.floor((hoy - fI) / (1000 * 60 * 60 * 24));
+                    const isV = (diff > c.plazo && c.saldo > 0);
 
-                        const div = document.createElement('div');
-                        div.className = `item-card ${done ? 'completed' : ''}`;
-                        div.onclick = () => {
-                            actID = c.id; actSal = c.saldo;
-                            document.getElementById('pop-name').innerText = c.nombre;
-                            document.getElementById('pop-input').value = c.cuota;
-                            document.getElementById('pop-pay').style.display = "flex";
-                        };
-                        div.innerHTML = `
-                            <div class="item-info"><h3>${c.nombre}</h3><p><i class="fa-solid fa-location-dot"></i> ${c.barrio}</p></div>
-                            <div class="item-right"><span class="price">${fmt(c.saldo)}</span><span class="sub">Cuota: ${fmt(c.cuota)}</span></div>
-                        `;
-                        list.appendChild(div);
+                    const matchSearch = c.nombre.toLowerCase().includes(query) || (c.barrio && c.barrio.toLowerCase().includes(query));
+                    if(c.saldo > 0 && c.dia === day && matchSearch) {
+                        list.push({ ...c, vencido: isV });
                     }
                 });
 
-                // Gastos
-                Object.values(gts).forEach(g => { if (g.f === h) gHoy += g.m; });
+                // Ordenar Clientes (Nombre)
+                list.sort((a,b) => {
+                    if (a.vencido !== b.vencido) return b.vencido - a.vencido;
+                    return sortClsAsc ? a.nombre.localeCompare(b.nombre) : b.nombre.localeCompare(a.nombre);
+                });
 
-                // UI Actualización
-                document.getElementById('st-cobro-hoy').innerText = fmt(cHoy);
-                document.getElementById('st-pend-hoy').innerText = fmt(pRuta);
-                
-                // Caja
-                document.getElementById('cj-base').innerText = fmt(base);
-                document.getElementById('cj-recaudo').innerText = fmt(cHoy);
-                document.getElementById('cj-gastos').innerText = fmt(gHoy);
-                document.getElementById('cj-prestado').innerText = fmt(pHoy);
-                document.getElementById('cj-final').innerText = fmt(base + cHoy - gHoy - pHoy);
-                document.getElementById('base-val').value = base;
+                const container = document.getElementById('render-ruta');
+                container.innerHTML = "";
+                list.forEach(c => {
+                    const cobradoYa = (c.u_f === h);
+                    const div = document.createElement('div');
+                    div.className = `card ${c.vencido ? 'vencido' : ''}`;
+                    if(cobradoYa) div.style.opacity = "0.5";
 
-                // Stats Maestras
-                document.getElementById('mst-calle').innerText = fmt(tCalle);
-                document.getElementById('mst-inv').innerText = fmt(tInv);
-                document.getElementById('mst-util').innerText = fmt(tCalle - tInv);
-                document.getElementById('mst-count').innerText = tCount;
-                document.getElementById('mst-avg').innerText = fmt(tCount > 0 ? tCalle / tCount : 0);
+                    div.innerHTML = `
+                        ${c.vencido ? '<div class="tag-vencido">VENCIDO / URGENTE</div>' : ''}
+                        <div onclick="openP('${c.id}', '${c.nombre}', ${c.saldo}, ${c.cuota})">
+                            <div class="c-title">${c.nombre}</div>
+                            <div class="c-meta">
+                                <span>Saldo: <span class="c-val">${cur(c.saldo)}</span></span>
+                                <span>Cuota: <span class="c-val">${cur(c.cuota)}</span></span>
+                            </div>
+                            <p style="font-size:10px; color:#999; margin-top:6px;">Barrio: ${c.barrio || 'N/A'}</p>
+                        </div>
+                        <div class="boss-controls">
+                            <button class="b-btn b-del" onclick="del('${c.id}')">Eliminar</button>
+                            <button class="b-btn b-ren" onclick="dup('${c.nombre}', '${c.barrio}')">Renovar</button>
+                            <button class="b-btn b-amp" onclick="openAmp('${c.id}', '${c.nombre}', ${c.saldo}, ${c.capital})">Ampliar</button>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
 
-                if (hist.innerHTML === "") hist.innerHTML = "<p style='text-align:center; color:var(--text-dim); padding:10px; font-size:12px;'>No hay cobros hoy.</p>";
+                // Ordenar y Renderizar Historial
+                historyList.sort((a, b) => sortHistNewest ? b.time - a.time : a.time - b.time);
+                const histCont = document.getElementById('hist-recaudo');
+                histCont.innerHTML = "";
+                historyList.forEach(item => {
+                    histCont.innerHTML += `<div style="display:flex; justify-content:space-between; font-size:12px; padding:8px 0; border-bottom:1px solid #f9f9f9;"><span>${item.name}</span><b>${cur(item.amount)}</b></div>`;
+                });
+
+                Object.values(gts).forEach(g => { if(g.f === h) gHoy += g.m; });
+
+                document.getElementById('st-cap').innerText = cur(capCalle);
+                document.getElementById('st-int').innerText = cur(salCalle - capCalle);
+                document.getElementById('st-tot').innerText = cur(salCalle);
+                document.getElementById('cj-base').innerText = cur(base);
+                document.getElementById('cj-rec').innerText = cur(rHoy);
+                document.getElementById('cj-out').innerText = cur(gHoy + nHoy);
+                document.getElementById('cj-total').innerText = cur(base + rHoy - (gHoy + nHoy));
             });
         }
 
-        async function confirmPay() {
-            const v = parseFloat(document.getElementById('pop-input').value);
-            if (!v) return;
-            const h = new Date().toISOString().split('T')[0];
-            await db.ref(`jc_v130/clientes/${actID}`).update({ saldo: actSal - v, u_f: h });
-            await db.ref(`jc_v130/clientes/${actID}/pagos`).push({ f: h, m: v });
-            closePop();
-        }
+        function exportHistory() {
+            const range = parseInt(document.getElementById('export-range').value);
+            const limit = Date.now() - (range * 24 * 60 * 60 * 1000);
+            let csv = "Fecha,Cliente,Tipo,Monto,Concepto\n";
 
-        async function addNew() {
-            const n = document.getElementById('nw-name').value;
-            const c = parseFloat(document.getElementById('nw-cap').value);
-            const i = parseFloat(document.getElementById('nw-int').value) / 100;
-            const d = parseFloat(document.getElementById('nw-days').value);
-            const day = document.getElementById('nw-day').value;
-            const b = document.getElementById('nw-barrio').value;
-
-            if (!n || !c || !d) return alert("Completa todos los campos");
-            const h = new Date().toISOString().split('T')[0];
-            const tot = c + (c * i);
-            const id = Date.now();
-
-            await db.ref('jc_v130/clientes/' + id).set({
-                id, nombre: n, capital: c, saldo: tot, cuota: Math.ceil(tot / d),
-                dia: day, barrio: b, f_crea: h, u_f: ""
+            Object.values(allCls).forEach(c => {
+                if(c.pagos) {
+                    Object.values(c.pagos).forEach(p => {
+                        if(p.t >= limit) csv += `${p.f},${c.nombre},PAGO,${p.m},Cobro Diario\n`;
+                    });
+                }
+                if(new Date(c.f_crea).getTime() >= limit) {
+                    csv += `${c.f_crea},${c.nombre},NUEVO,-${c.capital},Prestamo Inicial\n`;
+                }
             });
-            alert("PRÉSTAMO CREADO");
-            tab('ruta', document.querySelectorAll('.dock-tab')[0]);
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('hidden', '');
+            a.setAttribute('href', url);
+            a.setAttribute('download', `JC_Elite_Reporte_${new Date().toLocaleDateString()}.csv`);
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
         }
 
-        async function addGasto() {
-            const d = document.getElementById('gs-desc').value;
-            const v = parseFloat(document.getElementById('gs-val').value);
-            if (!d || !v) return;
+        setInterval(() => {
+            if(!sStart) return;
+            const diff = Date.now() - sStart;
+            const h = Math.floor(diff/3600000).toString().padStart(2,'0');
+            const m = Math.floor((diff%3600000)/60000).toString().padStart(2,'0');
+            const s = Math.floor((diff%60000)/1000).toString().padStart(2,'0');
+            document.getElementById('timer').innerText = `RUTA ACTIVA: ${h}:${m}:${s}`;
+        }, 1000);
+
+        function openP(id, n, s, c) { sId = id; sSal = s; document.getElementById('p-nom').innerText = n; document.getElementById('p-val').value = c; document.getElementById('mod-p').style.display = 'flex'; }
+        
+        async function confirmP() {
+            const v = parseFloat(document.getElementById('p-val').value);
+            if(!v) return;
             const h = new Date().toISOString().split('T')[0];
-            await db.ref('jc_v130/gastos').push({ f: h, d, m: v });
-            document.getElementById('gs-desc').value = ""; document.getElementById('gs-val').value = "";
-            alert("GASTO REGISTRADO");
+            const nSal = sSal - v;
+            await db.ref(`jc_v130/clientes/${sId}`).update({ saldo: nSal, u_f: h });
+            await db.ref(`jc_v130/clientes/${sId}/pagos`).push({ f: h, m: v, t: Date.now() });
+            if(nSal <= 0) {
+                if(confirm("PAGÓ TODO. ¿Renovar?")) { dup(allCls[sId].nombre, allCls[sId].barrio); }
+                await db.ref(`jc_v130/clientes/${sId}`).remove();
+            }
+            closeM();
         }
 
-        function tab(t, btn) {
-            document.querySelectorAll('.view-pane').forEach(p => p.classList.remove('active'));
-            document.getElementById('view-' + t).classList.add('active');
-            document.querySelectorAll('.dock-tab').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+        function openAmp(id, n, s, c) { sId = id; sSal = s; sCap = c; document.getElementById('amp-nom').innerText = n; document.getElementById('mod-amp').style.display = 'flex'; }
+        async function confirmAmp() {
+            const plus = parseFloat(document.getElementById('amp-plus').value) || 0;
+            const i = parseFloat(document.getElementById('amp-int').value)/100;
+            const d = parseFloat(document.getElementById('amp-d').value);
+            const nS = (sSal + plus) * (1 + i);
+            await db.ref(`jc_v130/clientes/${sId}`).update({ saldo: nS, capital: sCap + plus, cuota: Math.ceil(nS/d), plazo: d });
+            alert("AMPLIADO"); closeM();
         }
 
-        function closePop() { document.getElementById('pop-pay').style.display = "none"; }
+        async function saveN() {
+            const n = document.getElementById('n-nom').value, m = parseFloat(document.getElementById('n-monto').value), i = parseFloat(document.getElementById('n-porcent').value)/100, d = parseFloat(document.getElementById('n-plazo').value), b = document.getElementById('n-bar').value;
+            if(!n || !m) return;
+            const id = Date.now(), h = new Date().toISOString().split('T')[0], t = m * (1 + i);
+            await db.ref('jc_v130/clientes/'+id).set({ id, nombre: n, capital: m, saldo: t, cuota: Math.ceil(t/d), dia: day, barrio: b, f_crea: h, u_f: "", plazo: d });
+            alert("ACTIVADO"); sw('ruta', document.querySelectorAll('.tab')[0]);
+        }
+
+        async function saveG() { const d = document.getElementById('g-desc').value, m = parseFloat(document.getElementById('g-monto').value); if(!m) return; await db.ref('jc_v130/gastos').push({ f: new Date().toISOString().split('T')[0], d, m }); alert("GASTO OK"); }
+        async function upBase(v) { await db.ref(`jc_v130/config/base/${new Date().toISOString().split('T')[0]}`).set(parseFloat(v) || 0); }
+        async function del(id) { if(confirm("¿BORRAR?")) await db.ref(`jc_v130/clientes/${id}`).remove(); }
+        function dup(n, b) { document.getElementById('n-nom').value = n; document.getElementById('n-bar').value = b; sw('nuevo', document.querySelectorAll('.tab')[3]); }
+        async function nuke() { if(confirm("¿BORRAR TODO?")) { await db.ref('jc_v130').remove(); location.reload(); } }
+        function closeM() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
         render();
     </script>
 </body>
