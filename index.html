@@ -9,7 +9,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -54,10 +54,6 @@
         .day-btn { flex: 0 0 auto; padding: 8px 18px; border-radius: 20px; border: 1px solid #eee; background: #f5f5f5; font-size: 10px; font-weight: 800; color: #777; transition: 0.3s; }
         .day-btn.active { background: var(--oro-grad); color: #fff; border: none; box-shadow: var(--shadow-gold); }
 
-        .search-container { position: sticky; top: 0; background: var(--perla); padding: 10px 0; z-index: 900; display: flex; gap: 8px; }
-        .search-input { flex: 1; height: 45px; border-radius: 12px; border: 1.5px solid var(--oro-brillante); padding: 0 15px; font-size: 14px; background: #fff; outline: none; }
-        .sort-toggle { width: 45px; height: 45px; border-radius: 12px; border: 1.5px solid var(--oro-brillante); background: #fff; color: var(--oro-oscuro); display: flex; align-items: center; justify-content: center; font-size: 18px; }
-
         .view-pane {
             position: absolute; top: 150px; bottom: 85px; width: 100%;
             overflow-y: auto; padding: 20px; display: none;
@@ -65,14 +61,17 @@
         }
         #view-ruta { display: block; }
 
+        .search-container { position: sticky; top: 0; background: var(--perla); padding-bottom: 15px; z-index: 900; display: flex; gap: 8px; }
+        .search-input { flex: 1; height: 45px; border-radius: 12px; border: 1.5px solid var(--oro-brillante); padding: 0 15px; font-size: 14px; background: #fff; outline: none; }
+        .sort-toggle { width: 45px; height: 45px; border-radius: 12px; border: 1.5px solid var(--oro-brillante); background: #fff; color: var(--oro-oscuro); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+
         .card {
             background: #fff; border-radius: 20px; padding: 20px; margin-bottom: 15px;
             border: 1px solid #eee; box-shadow: 0 4px 15px rgba(0,0,0,0.02);
             position: relative; transition: 0.3s;
         }
-        .card.vencido { border: 2.5px solid var(--rojo-neon); background: #fff9f9; box-shadow: 0 0 15px rgba(255, 0, 60, 0.1); }
-        .tag-vencido { position: absolute; top: 0; right: 0; background: var(--rojo-neon); color: #fff; font-size: 9px; font-weight: 900; padding: 5px 12px; border-bottom-left-radius: 15px; animation: blink 1.5s infinite; }
-        @keyframes blink { 50% { opacity: 0.6; } }
+        .card.vencido { border: 2.5px solid var(--rojo-neon); background: #fff9f9; }
+        .tag-vencido { position: absolute; top: 0; right: 0; background: var(--rojo-neon); color: #fff; font-size: 9px; font-weight: 900; padding: 5px 12px; border-bottom-left-radius: 15px; }
 
         .c-title { font-size: 18px; font-weight: 800; color: var(--oro-oscuro); text-transform: uppercase; margin-bottom: 4px; }
         .c-meta { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: #555; }
@@ -98,7 +97,7 @@
         .tab span { font-size: 9px; font-weight: 800; text-transform: uppercase; }
 
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); display: none; align-items: center; padding: 25px; z-index: 3000; }
-        .sheet { background: #fff; width: 100%; border-radius: 25px; padding: 30px; border-top: 6px solid var(--oro-brillante); box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        .sheet { background: #fff; width: 100%; border-radius: 25px; padding: 30px; border-top: 6px solid var(--oro-brillante); }
 
         .boss-only-ui { display: none !important; }
         .is-boss .boss-only-ui { display: flex !important; }
@@ -124,7 +123,7 @@
 
     <main id="view-ruta" class="view-pane">
         <div class="search-container">
-            <input type="text" class="search-input" id="search" placeholder=" Buscar..." oninput="render()">
+            <input type="text" class="search-input" id="search" placeholder="Buscar cliente o barrio..." oninput="render()">
             <button class="sort-toggle" onclick="toggleSortCls()"><i id="sort-icon-cls" class="fa-solid fa-arrow-down-z-a"></i></button>
         </div>
         <div id="render-ruta"></div>
@@ -148,7 +147,7 @@
                     <option value="365">Todo el Año</option>
                 </select>
             </div>
-            <button class="btn-gold" style="height: 45px; font-size: 11px;" onclick="exportPDF()">Descargar Reporte Supreme (PDF)</button>
+            <button id="btn-pdf-action" class="btn-gold" style="height: 45px; font-size: 11px;" onclick="exportPDF()">Descargar Reporte Supreme (PDF)</button>
         </div>
 
         <div class="card">
@@ -192,7 +191,7 @@
             </div>
         </div>
         <div class="card"><div class="group"><label>Ajustar Base del Día</label><input type="number" id="set-base" onchange="upBase(this.value)"></div></div>
-        <button class="btn-gold" style="background:white; color:red; border:2.5px solid red; box-shadow:none;" onclick="nuke()">NUKE: BORRAR TODA LA BASE DE DATOS</button>
+        <button class="btn-gold" style="background:white; color:red; border:2.5px solid red; box-shadow:none; margin-top:20px;" onclick="nuke()">BORRAR TODA LA BASE DE DATOS</button>
     </main>
 
     <nav class="dock">
@@ -235,8 +234,7 @@
         const diasSemana = ["Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"];
         const fechaHoy = new Date();
         let day = diasSemana[fechaHoy.getDay()]; 
-        let boss = false, sId, sSal, sCap, sStart = null, allCls = {};
-        
+        let boss = false, sId, sSal, sCap, sStart = null, allCls = {}, allGastos = {};
         let sortClsAsc = true;
         let sortHistNewest = true;
 
@@ -267,15 +265,13 @@
 
         function toggleSortCls() {
             sortClsAsc = !sortClsAsc;
-            const icon = document.getElementById('sort-icon-cls');
-            icon.className = sortClsAsc ? "fa-solid fa-arrow-down-a-z" : "fa-solid fa-arrow-down-z-a";
+            document.getElementById('sort-icon-cls').className = sortClsAsc ? "fa-solid fa-arrow-down-a-z" : "fa-solid fa-arrow-down-z-a";
             render();
         }
 
         function toggleSortHist() {
             sortHistNewest = !sortHistNewest;
-            const icon = document.getElementById('sort-icon-hist');
-            icon.className = sortHistNewest ? "fa-solid fa-clock-rotate-left" : "fa-solid fa-history";
+            document.getElementById('sort-icon-hist').className = sortHistNewest ? "fa-solid fa-clock-rotate-left" : "fa-solid fa-history";
             render();
         }
 
@@ -286,8 +282,10 @@
             db.ref('jc_v130').on('value', snap => {
                 const data = snap.val() || {};
                 const cls = data.clientes || {};
+                const hst = data.historial_finalizados || {};
                 allCls = cls;
                 const gts = data.gastos || {};
+                allGastos = gts;
                 const base = data.config?.base?.[h] || 0;
 
                 let rHoy = 0, gHoy = 0, nHoy = 0, capCalle = 0, salCalle = 0;
@@ -303,7 +301,7 @@
                             if(p.f === h) {
                                 rHoy += p.m;
                                 if(!sStart || p.t < sStart) sStart = p.t;
-                                historyList.push({ name: c.nombre, amount: p.m, time: p.t });
+                                historyList.push({ name: c.nombre, amount: p.m, time: p.t, type: 'COBRO' });
                             }
                         });
                     }
@@ -315,9 +313,14 @@
                     const diff = Math.floor((hoy - fI) / (1000 * 60 * 60 * 24));
                     const isV = (diff > c.plazo && c.saldo > 0);
 
-                    const matchSearch = c.nombre.toLowerCase().includes(query) || (c.barrio && c.barrio.toLowerCase().includes(query));
-                    if(c.saldo > 0 && c.dia === day && matchSearch) {
+                    if(c.saldo > 0 && c.dia === day && (c.nombre.toLowerCase().includes(query) || (c.barrio && c.barrio.toLowerCase().includes(query)))) {
                         list.push({ ...c, vencido: isV });
+                    }
+                });
+
+                Object.values(hst).forEach(f => {
+                    if(f.f === h) {
+                        historyList.push({ name: f.nombre, amount: 0, time: f.t, type: 'FINALIZADO' });
                     }
                 });
 
@@ -335,7 +338,7 @@
                     if(cobradoYa) div.style.opacity = "0.5";
 
                     div.innerHTML = `
-                        ${c.vencido ? '<div class="tag-vencido">VENCIDO / URGENTE</div>' : ''}
+                        ${c.vencido ? '<div class="tag-vencido">VENCIDO</div>' : ''}
                         <div onclick="openP('${c.id}', '${c.nombre}', ${c.saldo}, ${c.cuota})">
                             <div class="c-title">${c.nombre}</div>
                             <div class="c-meta">
@@ -357,7 +360,12 @@
                 const histCont = document.getElementById('hist-recaudo');
                 histCont.innerHTML = "";
                 historyList.forEach(item => {
-                    histCont.innerHTML += `<div style="display:flex; justify-content:space-between; font-size:12px; padding:8px 0; border-bottom:1px solid #f9f9f9;"><span>${item.name}</span><b>${cur(item.amount)}</b></div>`;
+                    const isFin = item.type === 'FINALIZADO';
+                    histCont.innerHTML += `
+                        <div style="display:flex; justify-content:space-between; font-size:12px; padding:8px 0; border-bottom:1px solid #f9f9f9; color:${isFin ? 'var(--verde-oro)' : 'inherit'}">
+                            <span>${isFin ? '✅' : ''} ${item.name}</span>
+                            <b>${isFin ? 'FINALIZADO' : cur(item.amount)}</b>
+                        </div>`;
                 });
 
                 Object.values(gts).forEach(g => { if(g.f === h) gHoy += g.m; });
@@ -372,78 +380,113 @@
             });
         }
 
-        // --- NUEVA FUNCIÓN PDF SUPREME ---
-        function exportPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            const range = parseInt(document.getElementById('export-range').value);
-            const limit = Date.now() - (range * 24 * 60 * 60 * 1000);
-            
-            // Estilo de Cabecera
-            doc.setFillColor(166, 124, 0); // Color Oro
-            doc.rect(0, 0, 210, 40, 'F');
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(22);
-            doc.setFont("helvetica", "bold");
-            doc.text("JC SUPREME ELITE", 105, 20, null, null, "center");
-            doc.setFontSize(10);
-            doc.text("REPORTE DE MOVIMIENTOS - GOLD EDITION", 105, 30, null, null, "center");
+        async function exportPDF() {
+            const btn = document.getElementById('btn-pdf-action');
+            btn.innerText = "PROCESANDO...";
+            btn.disabled = true;
 
-            // Datos de la tabla
-            let rows = [];
-            Object.values(allCls).forEach(c => {
-                if(c.pagos) {
-                    Object.values(c.pagos).forEach(p => {
-                        if(p.t >= limit) rows.push([p.f, c.nombre, 'COBRO', cur(p.m), c.barrio || '-']);
-                    });
-                }
-                if(new Date(c.f_crea).getTime() >= limit) {
-                    rows.push([c.f_crea, c.nombre, 'NUEVO', `-${cur(c.capital)}`, 'Préstamo Inicial']);
-                }
-            });
+            try {
+                // ACCESO DIRECTO PARA EVITAR ERROR f3
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                const range = parseInt(document.getElementById('export-range').value);
+                const limit = Date.now() - (range * 24 * 60 * 60 * 1000);
+                
+                // Diseño de Cabecera
+                doc.setFillColor(138, 109, 59);
+                doc.rect(0, 0, 210, 40, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(22);
+                doc.text("JC SUPREME ELITE", 105, 20, { align: "center" });
+                doc.setFontSize(10);
+                doc.text("REPORTE DE MOVIMIENTOS - GOLD EDITION", 105, 30, { align: "center" });
 
-            // Ordenar por fecha descendente
-            rows.sort((a, b) => new Date(b[0]) - new Date(a[0]));
+                let rows = [];
+                let totalGananciaInteres = 0;
+                let totalGastos = 0;
 
-            doc.autoTable({
-                startY: 50,
-                head: [['Fecha', 'Cliente', 'Tipo', 'Monto', 'Concepto/Barrio']],
-                body: rows,
-                headStyles: { fillColor: [138, 109, 59], textColor: [255, 255, 255] },
-                alternateRowStyles: { fillColor: [245, 245, 245] },
-                margin: { top: 50 },
-                styles: { fontSize: 9 }
-            });
+                // 1. Clientes Activos (Salidas)
+                Object.values(allCls).forEach(c => {
+                    if(new Date(c.f_crea).getTime() >= limit) {
+                        rows.push([c.f_crea, c.nombre, 'ACTIVO', `-${cur(c.capital)}`, 'Salida Capital']);
+                    }
+                });
 
-            doc.save(`Reporte_JC_Supreme_${new Date().toISOString().split('T')[0]}.pdf`);
+                // 2. Finalizados (Ganancias)
+                const snapH = await db.ref('jc_v130/historial_finalizados').once('value');
+                const hst = snapH.val() || {};
+                Object.values(hst).forEach(f => {
+                    if(f.t >= limit) {
+                        const ganancia = (f.total_cobrado - f.capital_orig) || (f.capital_orig * 0.20);
+                        totalGananciaInteres += ganancia;
+                        rows.push([f.f, f.nombre, 'FINALIZADO', cur(ganancia), 'Ganancia']);
+                    }
+                });
+
+                // 3. Gastos
+                Object.values(allGastos).forEach(g => {
+                    const gTime = new Date(g.f).getTime();
+                    if(gTime >= limit) {
+                        totalGastos += parseFloat(g.m);
+                        rows.push([g.f, g.d, 'GASTO', `-${cur(g.m)}`, 'Egreso']);
+                    }
+                });
+
+                rows.sort((a, b) => new Date(b[0]) - new Date(a[0]));
+
+                // LLAMADA SEGURA AL PLUGIN
+                doc.autoTable({
+                    startY: 45,
+                    head: [['Fecha', 'Concepto', 'Estado', 'Valor', 'Detalle']],
+                    body: rows,
+                    theme: 'striped',
+                    headStyles: { fillColor: [138, 109, 59] },
+                    styles: { fontSize: 8 }
+                });
+
+                const finalY = doc.lastAutoTable.finalY + 15;
+                doc.setTextColor(0);
+                doc.text(`(+) Ganancia Realizada: ${cur(totalGananciaInteres)}`, 14, finalY);
+                doc.text(`(-) Gastos Totales: ${cur(totalGastos)}`, 14, finalY + 10);
+                doc.setFontSize(14);
+                doc.text(`BALANCE: ${cur(totalGananciaInteres - totalGastos)}`, 14, finalY + 25);
+
+                doc.save(`SUPREME_${new Date().toISOString().split('T')[0]}.pdf`);
+                alert("Reporte generado con éxito.");
+
+            } catch (err) {
+                console.error(err);
+                alert("Error crítico: Por favor refresca la app e intenta de nuevo.");
+            } finally {
+                btn.innerText = "Descargar Reporte Supreme (PDF)";
+                btn.disabled = false;
+            }
         }
 
-        setInterval(() => {
-            if(!sStart) return;
-            const diff = Date.now() - sStart;
-            const h = Math.floor(diff/3600000).toString().padStart(2,'0');
-            const m = Math.floor((diff%3600000)/60000).toString().padStart(2,'0');
-            const s = Math.floor((diff%60000)/1000).toString().padStart(2,'0');
-            document.getElementById('timer').innerText = `RUTA ACTIVA: ${h}:${m}:${s}`;
-        }, 1000);
-
-        function openP(id, n, s, c) { sId = id; sSal = s; document.getElementById('p-nom').innerText = n; document.getElementById('p-val').value = c; document.getElementById('mod-p').style.display = 'flex'; }
-        
         async function confirmP() {
             const v = parseFloat(document.getElementById('p-val').value);
             if(!v) return;
             const h = new Date().toISOString().split('T')[0];
             const nSal = sSal - v;
-            await db.ref(`jc_v130/clientes/${sId}`).update({ saldo: nSal, u_f: h });
             await db.ref(`jc_v130/clientes/${sId}/pagos`).push({ f: h, m: v, t: Date.now() });
+            await db.ref(`jc_v130/clientes/${sId}`).update({ saldo: nSal, u_f: h });
             if(nSal <= 0) {
+                await db.ref(`jc_v130/historial_finalizados`).push({ 
+                    nombre: allCls[sId].nombre, f: h, t: Date.now(), 
+                    capital_orig: allCls[sId].capital, 
+                    total_cobrado: (allCls[sId].capital * 1.2)
+                });
                 if(confirm("PAGÓ TODO. ¿Renovar?")) { dup(allCls[sId].nombre, allCls[sId].barrio); }
                 await db.ref(`jc_v130/clientes/${sId}`).remove();
             }
             closeM();
         }
 
+        function openP(id, n, s, c) { sId = id; sSal = s; document.getElementById('p-nom').innerText = n; document.getElementById('p-val').value = c; document.getElementById('mod-p').style.display = 'flex'; }
         function openAmp(id, n, s, c) { sId = id; sSal = s; sCap = c; document.getElementById('amp-nom').innerText = n; document.getElementById('mod-amp').style.display = 'flex'; }
+        
         async function confirmAmp() {
             const plus = parseFloat(document.getElementById('amp-plus').value) || 0;
             const i = parseFloat(document.getElementById('amp-int').value)/100;
@@ -467,6 +510,16 @@
         function dup(n, b) { document.getElementById('n-nom').value = n; document.getElementById('n-bar').value = b; sw('nuevo', document.querySelectorAll('.tab')[3]); }
         async function nuke() { if(confirm("¿BORRAR TODO?")) { await db.ref('jc_v130').remove(); location.reload(); } }
         function closeM() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
+        
+        setInterval(() => {
+            if(!sStart) return;
+            const diff = Date.now() - sStart;
+            const h = Math.floor(diff/3600000).toString().padStart(2,'0');
+            const m = Math.floor((diff%3600000)/60000).toString().padStart(2,'0');
+            const s = Math.floor((diff%60000)/1000).toString().padStart(2,'0');
+            document.getElementById('timer').innerText = `RUTA ACTIVA: ${h}:${m}:${s}`;
+        }, 1000);
+
         render();
     </script>
 </body>
