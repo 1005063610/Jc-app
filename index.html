@@ -818,6 +818,70 @@ body {
 }
 .wa-fab:hover { transform: scale(1.08); }
 .is-boss .wa-fab { display: flex; }
+
+/* ══════════════════════════════════════
+   DRAWER MÓVIL (solo jefe en celular)
+══════════════════════════════════════ */
+.mob-menu-btn {
+  display: none;
+  width: 36px; height: 36px; border-radius: 10px;
+  background: var(--white5); border: 1px solid var(--card-border);
+  color: var(--text); font-size: 17px; cursor: pointer;
+  align-items: center; justify-content: center;
+}
+.mob-drawer-overlay {
+  display: none; position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(2px);
+}
+.mob-drawer-overlay.open { display: block; }
+.mob-drawer {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 1001;
+  width: 270px; background: var(--p1);
+  border-right: 1px solid var(--card-border);
+  display: flex; flex-direction: column; padding: 0;
+  transform: translateX(-100%);
+  transition: transform .28s cubic-bezier(.4,0,.2,1);
+  box-shadow: 4px 0 40px rgba(0,0,0,0.5);
+}
+.mob-drawer.open { transform: translateX(0); }
+.mob-drawer-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 18px; border-bottom: 1px solid var(--card-border);
+}
+.mob-drawer-user {
+  display: flex; align-items: center; gap: 12px;
+  padding: 18px; border-bottom: 1px solid var(--card-border);
+  background: var(--white5);
+}
+.mob-drawer-links {
+  display: flex; flex-direction: column; padding: 10px 10px; gap: 2px; flex: 1;
+}
+.mob-dlink {
+  display: flex; align-items: center; gap: 14px;
+  padding: 13px 14px; border-radius: 12px;
+  border: none; background: transparent; color: var(--text3);
+  font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 700;
+  cursor: pointer; text-align: left; transition: all .18s; width: 100%;
+}
+.mob-dlink i { font-size: 17px; width: 22px; text-align: center; flex-shrink: 0; }
+.mob-dlink:hover { background: var(--white5); color: var(--text); }
+.mob-dlink.on { background: rgba(79,110,247,.15); color: var(--accent); }
+.mob-dlink.on i { filter: drop-shadow(0 0 4px rgba(79,110,247,.5)); }
+
+/* Solo mostrar en móvil */
+@media (max-width: 767px) {
+  .is-boss .mob-menu-btn { display: flex; }
+  /* Ocultar dock para el jefe en móvil — usa el drawer */
+  .is-boss .dock { display: none; }
+  /* El contenido sube hasta abajo porque no hay dock */
+  .is-boss #app { padding-bottom: 0 !important; }
+}
+/* En PC nunca mostrar el drawer ni el botón */
+@media (min-width: 768px) {
+  .mob-menu-btn { display: none !important; }
+  .mob-drawer { display: none !important; }
+  .mob-drawer-overlay { display: none !important; }
+}
 </style>
 </head>
 <body>
@@ -903,9 +967,40 @@ body {
 ══════════════════════════════════════ -->
 <div id="app">
 
+  <!-- DRAWER MÓVIL (solo jefe) -->
+  <div class="mob-drawer-overlay" id="mob-drawer-overlay" onclick="closeDrawer()"></div>
+  <nav class="mob-drawer" id="mob-drawer">
+    <div class="mob-drawer-header">
+      <div class="appbar-logo" style="font-size:20px;letter-spacing:3px">JC Supreme</div>
+      <button onclick="closeDrawer()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;padding:4px"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="mob-drawer-user">
+      <div class="user-avatar" id="drawer-avatar" style="width:40px;height:40px;font-size:15px">—</div>
+      <div>
+        <div style="font-size:14px;font-weight:800" id="drawer-name">—</div>
+        <div style="font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)">JEFE</div>
+      </div>
+    </div>
+    <div class="mob-drawer-links">
+      <button class="mob-dlink on" id="mdl-ruta"      onclick="mobileGoTab('ruta')">      <i class="fa-solid fa-map-location-dot"></i><span>Ruta</span></button>
+      <button class="mob-dlink"    id="mdl-stats"     onclick="mobileGoTab('stats')">     <i class="fa-solid fa-chart-line"></i><span>Stats</span></button>
+      <button class="mob-dlink"    id="mdl-historial" onclick="mobileGoTab('historial')"> <i class="fa-solid fa-clock-rotate-left"></i><span>Historial</span></button>
+      <button class="mob-dlink"    id="mdl-gastos"    onclick="mobileGoTab('gastos')">    <i class="fa-solid fa-wallet"></i><span>Gastos</span></button>
+      <button class="mob-dlink"    id="mdl-nuevo"     onclick="mobileGoTab('nuevo')">     <i class="fa-solid fa-circle-plus"></i><span>Nuevo Cliente</span></button>
+      <button class="mob-dlink"    id="mdl-team"      onclick="mobileGoTab('team')">      <i class="fa-solid fa-users"></i><span>Equipo</span></button>
+      <button class="mob-dlink"    id="mdl-caja"      onclick="mobileGoTab('caja')">      <i class="fa-solid fa-vault"></i><span>Caja</span></button>
+    </div>
+    <div style="padding:10px 10px 24px">
+      <button class="mob-dlink" style="color:var(--red)" onclick="doLogout()"><i class="fa-solid fa-right-from-bracket"></i><span>Cerrar sesión</span></button>
+    </div>
+  </nav>
+
   <!-- APPBAR -->
   <header class="appbar">
-    <div class="appbar-logo">JC Supreme</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="mob-menu-btn" id="mob-menu-btn" onclick="openDrawer()"><i class="fa-solid fa-bars"></i></button>
+      <div class="appbar-logo">JC Supreme</div>
+    </div>
     <div class="appbar-right">
       <div class="user-pill">
         <div class="user-avatar" id="ua-initials">—</div>
@@ -2135,6 +2230,45 @@ window.saveCliente = async function() {
   ['n-name','n-barrio','n-tel'].forEach(x=>{const el=document.getElementById(x);if(el)el.value='';});
   goTab('ruta',document.getElementById('dtab-ruta'));
   toast(`✅ ${n} activado`);
+};
+
+
+/* ══════════════════════════════════════
+   DRAWER MÓVIL
+══════════════════════════════════════ */
+function openDrawer() {
+  document.getElementById('mob-drawer').classList.add('open');
+  document.getElementById('mob-drawer-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeDrawer() {
+  document.getElementById('mob-drawer').classList.remove('open');
+  document.getElementById('mob-drawer-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function mobileGoTab(name) {
+  // Navegar igual que goTab pero usando los dtab del dock
+  const dockBtn = document.getElementById('dtab-' + name);
+  goTab(name, dockBtn);
+  if (name === 'historial') loadFullHistory();
+  // Actualizar estado visual del drawer
+  document.querySelectorAll('.mob-dlink').forEach(b => b.classList.remove('on'));
+  const drawerBtn = document.getElementById('mdl-' + name);
+  if (drawerBtn) drawerBtn.classList.add('on');
+  closeDrawer();
+}
+
+// Sincronizar drawer con startApp para poner nombre/avatar
+const _origStartAppDrawer = window.startApp;
+window.startApp = function() {
+  _origStartAppDrawer();
+  if (ME && ME.role === 'boss') {
+    const initials = ME.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    const av = document.getElementById('drawer-avatar');
+    const nm = document.getElementById('drawer-name');
+    if (av) av.textContent = initials;
+    if (nm) nm.textContent = ME.name;
+  }
 };
 
 </script>
