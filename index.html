@@ -671,6 +671,28 @@ body {
 ::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-thumb { background: var(--white10); border-radius: 3px; }
 
+
+/* ─── DÍAS CHECKBOXES ─── */
+.dias-check-grid {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px;
+}
+.dia-chk {
+  display: flex; flex-direction: column; align-items: center;
+  cursor: pointer; user-select: none;
+}
+.dia-chk input { display: none; }
+.dia-chk span {
+  padding: 8px 12px; border-radius: 10px;
+  border: 1.5px solid var(--card-border);
+  background: transparent; color: var(--text2);
+  font-size: 12px; font-weight: 800; letter-spacing: .05em;
+  transition: all .18s;
+}
+.dia-chk input:checked + span {
+  background: var(--grad); border-color: transparent;
+  color: #fff; box-shadow: 0 4px 12px rgba(79,110,247,.35);
+}
+
 /* ══════════════════════════════════════
    NIVEL 2 — DASHBOARD PC
 ══════════════════════════════════════ */
@@ -876,6 +898,14 @@ body {
   /* El contenido sube hasta abajo porque no hay dock */
   .is-boss #app { padding-bottom: 0 !important; }
 }
+
+/* Cobrador en móvil también usa drawer */
+@media (max-width: 767px) {
+  .is-collector .mob-menu-btn { display: flex; }
+  .is-collector .dock { display: none; }
+  .is-collector #app { padding-bottom: 0 !important; }
+}
+
 /* En PC nunca mostrar el drawer ni el botón */
 @media (min-width: 768px) {
   .mob-menu-btn { display: none !important; }
@@ -989,6 +1019,12 @@ body {
       <button class="mob-dlink"    id="mdl-nuevo"     onclick="mobileGoTab('nuevo')">     <i class="fa-solid fa-circle-plus"></i><span>Nuevo Cliente</span></button>
       <button class="mob-dlink"    id="mdl-team"      onclick="mobileGoTab('team')">      <i class="fa-solid fa-users"></i><span>Equipo</span></button>
       <button class="mob-dlink"    id="mdl-caja"      onclick="mobileGoTab('caja')">      <i class="fa-solid fa-vault"></i><span>Caja</span></button>
+    </div>
+
+    <div class="mob-drawer-links mob-col-links" style="display:none">
+      <button class="mob-dlink on" id="mdl-col-ruta"    onclick="mobileGoTab('ruta')">   <i class="fa-solid fa-map-location-dot"></i><span>Ruta</span></button>
+      <button class="mob-dlink"   id="mdl-col-stats"   onclick="mobileGoTab('stats')">  <i class="fa-solid fa-chart-line"></i><span>Stats</span></button>
+      <button class="mob-dlink"   id="mdl-col-gastos"  onclick="mobileGoTab('gastos')"> <i class="fa-solid fa-wallet"></i><span>Gastos</span></button>
     </div>
     <div style="padding:10px 10px 24px">
       <button class="mob-dlink" style="color:var(--red)" onclick="doLogout()"><i class="fa-solid fa-right-from-bracket"></i><span>Cerrar sesión</span></button>
@@ -1180,11 +1216,16 @@ body {
           <div class="fgroup"><label class="form-label">Usuario</label><input class="form-input" type="text" id="t-user" placeholder="usuario" autocomplete="off" autocapitalize="none"></div>
           <div class="fgroup"><label class="form-label">Contraseña</label><input class="form-input" type="password" id="t-pass" placeholder="••••••"></div>
         </div>
-        <div class="fgroup"><label class="form-label">Día asignado</label>
-          <select class="form-input form-select" id="t-dia">
-            <option>Lunes</option><option>Martes</option><option>Miercoles</option>
-            <option>Jueves</option><option>Viernes</option><option>Sabado</option><option>Domingo</option>
-          </select>
+        <div class="fgroup"><label class="form-label">Días asignados (puede elegir varios)</label>
+          <div class="dias-check-grid" id="t-dias-wrap">
+            <label class="dia-chk"><input type="checkbox" value="Lunes"><span>Lun</span></label>
+            <label class="dia-chk"><input type="checkbox" value="Martes"><span>Mar</span></label>
+            <label class="dia-chk"><input type="checkbox" value="Miercoles"><span>Mié</span></label>
+            <label class="dia-chk"><input type="checkbox" value="Jueves"><span>Jue</span></label>
+            <label class="dia-chk"><input type="checkbox" value="Viernes"><span>Vie</span></label>
+            <label class="dia-chk"><input type="checkbox" value="Sabado"><span>Sáb</span></label>
+            <label class="dia-chk"><input type="checkbox" value="Domingo"><span>Dom</span></label>
+          </div>
         </div>
         <button class="btn-act primary" onclick="saveCollector()">Registrar cobrador</button>
       </div>
@@ -1380,7 +1421,7 @@ async function doLogin() {
         document.getElementById('scr-blocked').classList.add('on');
         return;
       }
-      ME = { role:'collector', name:col.nombre, dia:col.dia, id };
+      ME = { role:'collector', name:col.nombre, dia:col.dia, dias:col.dias||[col.dia], id };
       startApp();
     } catch(e) { showErr('Error de conexión. Verifica internet.'); }
   }
@@ -1407,11 +1448,21 @@ function startApp() {
     document.getElementById('pdf-sec').style.display='block';
   } else {
     document.body.classList.add('is-collector');
-    DAY = ME.dia;
-    // Lock day nav
+    // Soporte para múltiples días
+    const colDias = ME.dias || [ME.dia];
+    // Seleccionar el día de hoy si el cobrador trabaja hoy, si no el primero
+    DAY = colDias.includes(nowDay()) ? nowDay() : colDias[0];
+    ME.dia = DAY;
+    // Lock day nav — solo los días asignados quedan activos
     document.querySelectorAll('.dpill').forEach(b=>{ b.style.opacity='.3'; b.style.pointerEvents='none'; });
-    const mine = document.getElementById('dp-'+ME.dia.substring(0,3));
-    if (mine) { mine.style.opacity='1'; mine.classList.add('on','mine'); mine.style.pointerEvents='auto'; }
+    colDias.forEach(d=>{
+      const pill = document.getElementById('dp-'+d.substring(0,3));
+      if (pill) {
+        pill.style.opacity='1'; pill.classList.add('mine'); pill.style.pointerEvents='auto';
+        pill.onclick = function(){ setDay(d, pill); };
+        if (d===DAY) pill.classList.add('on');
+      }
+    });
     startCollectorGPS();
   }
 
@@ -1669,13 +1720,16 @@ async function saveCollector(){
   const name=document.getElementById('t-name').value.trim();
   const user=document.getElementById('t-user').value.trim().toLowerCase();
   const pass=document.getElementById('t-pass').value.trim();
-  const dia=document.getElementById('t-dia').value;
+  const dias=[...document.querySelectorAll('#t-dias-wrap input:checked')].map(c=>c.value);
   if(!name||!user||!pass){toast('⚠️ Completa todos los campos');return;}
+  if(!dias.length){toast('⚠️ Selecciona al menos un día');return;}
   const snap=await db.ref('jc_v130/cobradores').orderByChild('usuario').equalTo(user).once('value');
   if(snap.val()){toast('⚠️ Ese usuario ya existe');return;}
-  await db.ref('jc_v130/cobradores').push({nombre:name,usuario:user,password:pass,dia,bloqueado:false,creado:Date.now()});
+  // Guardar dias como array; "dia" también como string del primero para compatibilidad
+  await db.ref('jc_v130/cobradores').push({nombre:name,usuario:user,password:pass,dia:dias[0],dias,bloqueado:false,creado:Date.now()});
   ['t-name','t-user','t-pass'].forEach(x=>document.getElementById(x).value='');
-  toast(`✅ ${name} registrado — Día: ${dia}`);
+  document.querySelectorAll('#t-dias-wrap input').forEach(c=>c.checked=false);
+  toast('✅ '+name+' registrado — Días: '+dias.join(', '));
   loadTeam();
 }
 async function loadTeam(){
@@ -1689,7 +1743,7 @@ async function loadTeam(){
       <div class="col-info">
         <div class="col-name">${c.nombre}</div>
         <div class="col-user">@${c.usuario}</div>
-        <span class="col-day">${c.dia}</span>
+        <span class="col-day">${(c.dias||[c.dia]).join(', ')}</span>
       </div>
       <div class="col-status ${c.bloqueado?'blocked':'active'}"></div>
       <div class="col-btns">
@@ -1719,7 +1773,7 @@ function startCollectorGPS(){
     db.ref(`jc_v130/gps_live/${ME.id}`).set({
       lat:pos.coords.latitude, lng:pos.coords.longitude,
       acc:pos.coords.accuracy,
-      nombre:ME.name, dia:ME.dia,
+      nombre:ME.name, dia:ME.dia, dias:ME.dias||[ME.dia],
       ts:Date.now(), online:true
     });
   };
@@ -2258,18 +2312,37 @@ function mobileGoTab(name) {
   closeDrawer();
 }
 
-// Sincronizar drawer con startApp para poner nombre/avatar
-const _origStartAppDrawer = window.startApp;
+
+// Mostrar links del drawer según rol
+const _drawerRoleInit = window.startApp;
 window.startApp = function() {
-  _origStartAppDrawer();
+  _drawerRoleInit();
   if (ME && ME.role === 'boss') {
+    document.querySelector('.mob-drawer-links:not(.mob-col-links)').style.display = 'flex';
+    document.querySelector('.mob-col-links').style.display = 'none';
+    // nombre en drawer
     const initials = ME.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
     const av = document.getElementById('drawer-avatar');
     const nm = document.getElementById('drawer-name');
-    if (av) av.textContent = initials;
-    if (nm) nm.textContent = ME.name;
+    if(av) av.textContent = initials;
+    if(nm) nm.textContent = ME.name;
+    document.querySelector('.mob-drawer .appbar-logo + div, .mob-drawer-user div div:last-child') && 
+      (document.querySelectorAll('.mob-drawer-user div div')[1].textContent = 'JEFE');
+  } else if (ME && ME.role === 'collector') {
+    document.querySelector('.mob-drawer-links:not(.mob-col-links)').style.display = 'none';
+    document.querySelector('.mob-col-links').style.display = 'flex';
+    // nombre en drawer
+    const initials = ME.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    const av = document.getElementById('drawer-avatar');
+    const nm = document.getElementById('drawer-name');
+    if(av) av.textContent = initials;
+    if(nm) nm.textContent = ME.name;
+    // cambiar label a COBRADOR
+    const roleLabel = document.querySelector('.mob-drawer-user > div > div:last-child');
+    if(roleLabel) roleLabel.textContent = 'COBRADOR';
   }
 };
+
 
 </script>
 </body>
