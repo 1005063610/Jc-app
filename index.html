@@ -1654,6 +1654,7 @@ async function confirmCobro(){
 
 /* ─── AMPLIAR ─── */
 function openAmp(id,n,sal,cap){
+  if(ME?.role!=='boss'){toast('⛔ Sin permiso');return;}
   sId=id;sSal=sal;sCap=cap;
   document.getElementById('sh-amp-sub').textContent=n;
   openSheet('sh-amp');
@@ -1683,11 +1684,13 @@ async function saveCliente(){
   toast(`✅ ${n} activado`);
 }
 function renewCliente(n,b){
+  if(ME?.role!=='boss'){toast('⛔ Sin permiso');return;}
   document.getElementById('n-name').value=n;
   document.getElementById('n-barrio').value=b;
   goTab('nuevo',document.getElementById('dtab-nuevo'));
 }
 async function delCliente(id){
+  if(ME?.role!=='boss'){toast('⛔ Sin permiso');return;}
   if(!confirm('¿Eliminar este cliente?'))return;
   await db.ref(`jc_v130/clientes/${id}`).remove();
   toast('🗑 Cliente eliminado');
@@ -1706,10 +1709,12 @@ async function saveGasto(){
 
 /* ─── CAJA ─── */
 async function saveBase(v){
+  if(ME?.role!=='boss'){toast('⛔ Sin permiso');return;}
   await db.ref(`jc_v130/config/base/${today()}`).set(parseFloat(v)||0);
   toast('💰 Base actualizada');
 }
 async function nukeAll(){
+  if(ME?.role!=='boss'){toast('⛔ Sin permiso');return;}
   if(!confirm('⚠️ ¿BORRAR TODA LA BASE DE DATOS?'))return;
   if(!confirm('Confirma de nuevo. Esta acción es irreversible.'))return;
   await db.ref('jc_v130').remove(); location.reload();
@@ -1717,6 +1722,7 @@ async function nukeAll(){
 
 /* ─── COBRADORES ─── */
 async function saveCollector(){
+  if(ME?.role!=='boss'){toast('⛔ Sin permiso');return;}
   const name=document.getElementById('t-name').value.trim();
   const user=document.getElementById('t-user').value.trim().toLowerCase();
   const pass=document.getElementById('t-pass').value.trim();
@@ -1755,11 +1761,13 @@ async function loadTeam(){
     </div>`).join('');
 }
 async function toggleBlock(id,block){
+  if(ME?.role!=='boss'){toast('⛔ Sin permiso');return;}
   await db.ref(`jc_v130/cobradores/${id}`).update({bloqueado:block});
   toast(block?'🔒 Cobrador bloqueado':'🔓 Cobrador desbloqueado');
   loadTeam();
 }
 async function removeCollector(id,name){
+  if(ME?.role!=='boss'){toast('⛔ Sin permiso');return;}
   if(!confirm(`¿Eliminar a ${name}?`))return;
   await db.ref(`jc_v130/cobradores/${id}`).remove();
   toast('🗑 Cobrador eliminado');
@@ -2269,6 +2277,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 // Patch saveCliente to include phone
 const _origSave = saveCliente;
 window.saveCliente = async function() {
+  if(ME?.role!=='boss'){toast('⛔ Sin permiso');return;}
   const n=document.getElementById('n-name').value.trim();
   const m=parseFloat(document.getElementById('n-capital').value);
   const i=parseFloat(document.getElementById('n-int').value)/100;
