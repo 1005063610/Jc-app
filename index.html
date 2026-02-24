@@ -337,12 +337,17 @@ body {
   background: var(--p1); border-top: 1px solid var(--card-border);
   display: flex; align-items: center; justify-content: space-around;
   padding-bottom: env(safe-area-inset-bottom, 4px);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
+.dock::-webkit-scrollbar { display: none; }
 .dTab {
-  flex: 1; display: flex; flex-direction: column;
+  flex: 1; flex-shrink: 0; display: flex; flex-direction: column;
   align-items: center; gap: 4px;
   background: none; border: none; color: var(--text2);
   cursor: pointer; padding: 6px; transition: color .2s;
+  min-width: 60px;
 }
 .dTab.on, .dTab-active { color: var(--accent); }
 .dTab.on i { filter: drop-shadow(0 0 5px rgba(79,110,247,.5)); }
@@ -350,6 +355,11 @@ body {
 .dTab span { font-size: 9px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
 .dTab.boss-only { display: none; }
 .is-boss .dTab.boss-only { display: flex; }
+/* Jefe en móvil: dock deslizable con todos los tabs */
+@media (max-width: 767px) {
+  .is-boss .dock { justify-content: flex-start; padding: 0 8px env(safe-area-inset-bottom,4px); }
+  .is-boss .dTab { flex: 0 0 68px; min-width: 68px; }
+}
 
 /* ══════════════════════════════════════
    CARDS
