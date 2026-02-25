@@ -1459,7 +1459,6 @@ function startApp() {
       const pill = document.getElementById('dp-'+d.substring(0,3));
       if (pill) {
         pill.style.opacity='1'; pill.classList.add('mine'); pill.style.pointerEvents='auto';
-        pill.onclick = function(){ setDay(d, pill); };
         if (d===DAY) pill.classList.add('on');
       }
     });
@@ -1499,10 +1498,20 @@ function goTab(name, btn) {
 }
 
 function setDay(d, btn) {
-  if (ME?.role==='collector') return;
-  DAY=d;
+  // Cobrador solo puede cambiar a sus días asignados
+  if (ME?.role==='collector') {
+    const colDias = ME.dias || [ME.dia];
+    if (!colDias.includes(d)) return;
+  }
+  DAY = d;
+  if (ME?.role==='collector') { ME.dia = d; }
   document.querySelectorAll('.dpill').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
+  // Forzar nueva lectura de Firebase con el día actualizado
+  if (typeof dbOff !== 'undefined' && dbOff) {
+    try { db.ref('jc_v130').off('value', dbOff); } catch(e){}
+    dbOff = null;
+  }
   render();
 }
 
