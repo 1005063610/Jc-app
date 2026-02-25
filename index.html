@@ -1443,6 +1443,11 @@ function startApp() {
   document.getElementById('ua-name').textContent = ME.name;
   document.getElementById('ua-role').textContent = ME.role==='boss'?'JEFE':'COBRADOR';
 
+  // Limpiar siempre los estilos inline de los pills antes de asignar rol
+  document.querySelectorAll('.dpill').forEach(b=>{
+    b.style.opacity=''; b.style.pointerEvents=''; b.classList.remove('on','mine');
+  });
+
   if (ME.role==='boss') {
     document.body.classList.add('is-boss');
     document.getElementById('pdf-sec').style.display='block';
@@ -1699,7 +1704,6 @@ function renewCliente(n,b){
   goTab('nuevo',document.getElementById('dtab-nuevo'));
 }
 async function delCliente(id){
-  if(ME?.role!=='boss'){toast('⛔ Sin permiso');return;}
   if(!confirm('¿Eliminar este cliente?'))return;
   await db.ref(`jc_v130/clientes/${id}`).remove();
   toast('🗑 Cliente eliminado');
