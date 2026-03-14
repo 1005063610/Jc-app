@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>JC Supreme — Nivel 2</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1a1f3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="JC Supreme">
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -1369,9 +1368,6 @@ firebase.initializeApp({
 });
 const db = firebase.database();
 
-/* ─── OFFLINE: sincroniza datos localmente ─── */
-db.ref('jc_v130').keepSynced(true);
-
 /* ─── CONFIG ─── */
 const _PIN = atob("SkM="); // "JC" — codificado, no visible en texto plano
 const DAYS = ["Domingo","Lunes","Martes","Miercoles","Jueves","Viernes","Sabado"];
@@ -2374,30 +2370,12 @@ window.startApp = function() {
 
 
 </script>
-
-<!-- BARRA OFFLINE -->
-<div id="offline-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:99999;background:#ef4444;color:#fff;text-align:center;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;padding:8px;letter-spacing:.06em;">
-  🔴 SIN CONEXIÓN — usando datos guardados
-</div>
-
+<div id="offline-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:99999;background:#ef4444;color:#fff;text-align:center;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;padding:8px;">🔴 SIN CONEXIÓN — usando datos guardados</div>
 <script>
-/* ─── ONLINE / OFFLINE ─── */
-window.addEventListener('offline', () => {
-  document.getElementById('offline-bar').style.display = 'block';
-});
-window.addEventListener('online', () => {
-  document.getElementById('offline-bar').style.display = 'none';
-});
-if (!navigator.onLine) {
-  document.getElementById('offline-bar').style.display = 'block';
-}
-
-/* ─── SERVICE WORKER ─── */
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
-  });
-}
+window.addEventListener('offline',()=>{document.getElementById('offline-bar').style.display='block';});
+window.addEventListener('online',()=>{document.getElementById('offline-bar').style.display='none';});
+if(!navigator.onLine)document.getElementById('offline-bar').style.display='block';
+if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 </script>
 </body>
 </html>
