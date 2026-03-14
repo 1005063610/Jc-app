@@ -2383,15 +2383,178 @@ window.startApp = function() {
 
 </script>
 
+<!-- ══ BARRA OFFLINE ══ -->
 <div id="offline-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:99999;background:#ef4444;color:#fff;text-align:center;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;padding:8px;">
-  🔴 SIN CONEXIÓN — los cambios se sincronizarán cuando vuelva internet
+  🔴 SIN CONEXIÓN — trabajando offline, se sincronizará automático
 </div>
+
 <script>
-function _chkNet(){document.getElementById('offline-bar').style.display=navigator.onLine?'none':'block';}
-window.addEventListener('offline',_chkNet);
-window.addEventListener('online',_chkNet);
+/* ══════════════════════════════════════════════════════════════
+   MOTOR OFFLINE / ONLINE — JC Supreme
+   
+   CÓMO FUNCIONA:
+   - Con internet: Firebase guarda todo normal en la nube
+   - Sin internet: los cambios se guardan en IndexedDB local
+   - Cuando vuelve internet: sube todo lo pendiente a Firebase
+   - La app funciona igual online y offline
+══════════════════════════════════════════════════════════════ */
+
+const OFFLINE_DB_NAME = 'jc_offline';
+const OFFLINE_DB_VER  = 1;
+const STORE_QUEUE     = 'cola_sync';   // cambios pendientes de subir
+const STORE_CACHE     = 'cache_data';  // copia local de datos Firebase
+
+let offlineDB = null;
+
+/* ── Abrir IndexedDB ── */
+function abrirOfflineDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(OFFLINE_DB_NAME, OFFLINE_DB_VER);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains(STORE_QUEUE))
+        d.createObjectStore(STORE_QUEUE, { keyPath:'id', autoIncrement:true });
+      if (!d.objectStoreNames.contains(STORE_CACHE))
+        d.createObjectStore(STORE_CACHE, { keyPath:'key' });
+    };
+    req.onsuccess = e => res(e.target.result);
+    req.onerror   = e => rej(e);
+  });
+}
+
+/* ── Guardar en cola de sincronización ── */
+function encolarCambio(path, value, tipo) {
+  if (!offlineDB) return;
+  const tx = offlineDB.transaction(STORE_QUEUE, 'readwrite');
+  tx.objectStore(STORE_QUEUE).add({ path, value, tipo, ts: Date.now() });
+}
+
+/* ── Guardar copia local de datos Firebase ── */
+function guardarCacheLocal(key, value) {
+  if (!offlineDB) return;
+  const tx = offlineDB.transaction(STORE_CACHE, 'readwrite');
+  tx.objectStore(STORE_CACHE).put({ key, value });
+}
+
+/* ── Leer copia local ── */
+function leerCacheLocal(key) {
+  return new Promise((res) => {
+    if (!offlineDB) return res(null);
+    const tx  = offlineDB.transaction(STORE_CACHE, 'readonly');
+    const req = tx.objectStore(STORE_CACHE).get(key);
+    req.onsuccess = e => res(e.target.result ? e.target.result.value : null);
+    req.onerror   = () => res(null);
+  });
+}
+
+/* ── Sincronizar cola cuando vuelve internet ── */
+async function sincronizarCola() {
+  if (!offlineDB || !navigator.onLine) return;
+  const tx    = offlineDB.transaction(STORE_QUEUE, 'readwrite');
+  const store = tx.objectStore(STORE_QUEUE);
+  const todos = await new Promise(res => {
+    const r = store.getAll();
+    r.onsuccess = e => res(e.target.result);
+    r.onerror   = () => res([]);
+  });
+  if (!todos.length) return;
+  for (const item of todos) {
+    try {
+      if (item.tipo === 'set')    await db.ref(item.path).set(item.value);
+      if (item.tipo === 'update') await db.ref(item.path).update(item.value);
+      if (item.tipo === 'push')   await db.ref(item.path).push(item.value);
+      if (item.tipo === 'remove') await db.ref(item.path).remove();
+      const del = offlineDB.transaction(STORE_QUEUE, 'readwrite');
+      del.objectStore(STORE_QUEUE).delete(item.id);
+    } catch(e) { console.warn('Error sincronizando:', e); }
+  }
+  toast('✅ Datos sincronizados con la nube');
+}
+
+/* ── Patch de Firebase para interceptar escrituras offline ──
+   Cuando no hay internet, en vez de escribir a Firebase
+   guarda en IndexedDB y lo sube cuando vuelve internet      */
+function patchFirebaseOffline() {
+  const refOriginal = db.ref.bind(db);
+  db.ref = function(path) {
+    const refObj = refOriginal(path);
+    if (navigator.onLine) return refObj; // con internet: normal
+
+    /* Sin internet: interceptar escrituras */
+    const setOrig    = refObj.set.bind(refObj);
+    const updateOrig = refObj.update.bind(refObj);
+    const pushOrig   = refObj.push.bind(refObj);
+    const removeOrig = refObj.remove.bind(refObj);
+
+    refObj.set = function(value) {
+      encolarCambio(path, value, 'set');
+      return Promise.resolve();
+    };
+    refObj.update = function(value) {
+      encolarCambio(path, value, 'update');
+      return Promise.resolve();
+    };
+    refObj.push = function(value) {
+      encolarCambio(path, value, 'push');
+      return Promise.resolve();
+    };
+    refObj.remove = function() {
+      encolarCambio(path, null, 'remove');
+      return Promise.resolve();
+    };
+
+    /* Las lecturas usan el caché local cuando no hay internet */
+    const onOrig = refObj.on.bind(refObj);
+    refObj.on = function(event, cb, err) {
+      leerCacheLocal(path).then(cached => {
+        if (cached) cb({ val: () => cached });
+      });
+      return onOrig(event, (snap) => {
+        guardarCacheLocal(path, snap.val());
+        cb(snap);
+      }, err);
+    };
+
+    const onceOrig = refObj.once.bind(refObj);
+    refObj.once = function(event) {
+      return leerCacheLocal(path).then(cached => {
+        if (cached) return { val: () => cached };
+        return onceOrig(event);
+      });
+    };
+
+    return refObj;
+  };
+}
+
+/* ── Iniciar motor offline ── */
+abrirOfflineDB().then(idb => {
+  offlineDB = idb;
+  patchFirebaseOffline();
+}).catch(e => console.warn('IndexedDB no disponible:', e));
+
+/* ── Detector online/offline ── */
+function _chkNet() {
+  const bar = document.getElementById('offline-bar');
+  if (navigator.onLine) {
+    bar.style.display = 'none';
+    sincronizarCola();
+    patchFirebaseOffline(); // re-aplicar patch con modo online
+  } else {
+    bar.style.display = 'block';
+    patchFirebaseOffline(); // re-aplicar patch con modo offline
+  }
+}
+window.addEventListener('offline', _chkNet);
+window.addEventListener('online',  _chkNet);
 _chkNet();
-if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+
+/* ── Service Worker ── */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () =>
+    navigator.serviceWorker.register('./sw.js').catch(() => {})
+  );
+}
 </script>
 </body>
 </html>
