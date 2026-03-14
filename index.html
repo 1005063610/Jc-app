@@ -1628,16 +1628,16 @@ function render() {
   const h=today(), q=(document.getElementById('search-inp')?.value||'').toLowerCase();
   if(dbOff){ try{dbOff();}catch(e){} }
 
-  dbOff = fdb.collection('clientes').onSnapshot(async snap=>{
+  // Función que procesa y muestra los datos en pantalla
+  async function procesarDatos(snap) {
     const cls={};
     snap.forEach(d=>{ cls[d.id]={...d.data(), id:d.id}; });
     allCls = cls;
 
-    // Leer gastos e historial
     const [snapG, snapH, snapB] = await Promise.all([
-      fdb.collection('gastos').get(),
-      fdb.collection('historial_finalizados').get(),
-      fdb.collection('config_base').doc(h).get()
+      fdb.collection('gastos').get({source: navigator.onLine ? 'default' : 'cache'}),
+      fdb.collection('historial_finalizados').get({source: navigator.onLine ? 'default' : 'cache'}),
+      fdb.collection('config_base').doc(h).get({source: navigator.onLine ? 'default' : 'cache'})
     ]);
     const gts={}, hst={};
     snapG.forEach(d=>{ gts[d.id]=d.data(); });
@@ -1743,7 +1743,20 @@ function render() {
 
     // Charts y notificaciones
     if(ME?.role==='boss'){ updateCharts(cls, gts); checkNotifications(cls); }
-  }, ()=>{ console.warn('Firestore sin conexión — usando caché local'); });
+  }
+
+  // Sin internet: leer directamente del caché de Firestore
+  if(!navigator.onLine){
+    fdb.collection('clientes').get({source:'cache'})
+      .then(snap => procesarDatos(snap))
+      .catch(()=>{});
+  }
+
+  // Con internet O sin internet: onSnapshot para actualizaciones en tiempo real
+  dbOff = fdb.collection('clientes').onSnapshot(
+    async snap => { await procesarDatos(snap); },
+    ()=>{ /* sin internet, ya se manejó arriba */ }
+  );
 }
 
 /* ═══════════════════════════════════════════════
