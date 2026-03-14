@@ -1628,17 +1628,22 @@ function render() {
   const h=today(), q=(document.getElementById('search-inp')?.value||'').toLowerCase();
   if(dbOff){ try{dbOff();}catch(e){} }
 
-  // Función que procesa y muestra los datos en pantalla
   async function procesarDatos(snap) {
     const cls={};
     snap.forEach(d=>{ cls[d.id]={...d.data(), id:d.id}; });
     allCls = cls;
 
+    const src = navigator.onLine ? 'default' : 'cache';
     const [snapG, snapH, snapB] = await Promise.all([
-      fdb.collection('gastos').get({source: navigator.onLine ? 'default' : 'cache'}),
-      fdb.collection('historial_finalizados').get({source: navigator.onLine ? 'default' : 'cache'}),
-      fdb.collection('config_base').doc(h).get({source: navigator.onLine ? 'default' : 'cache'})
-    ]);
+      fdb.collection('gastos').get({source:src}),
+      fdb.collection('historial_finalizados').get({source:src}),
+      fdb.collection('config_base').doc(h).get({source:src})
+    ]).catch(()=>Promise.all([
+      fdb.collection('gastos').get({source:'cache'}),
+      fdb.collection('historial_finalizados').get({source:'cache'}),
+      fdb.collection('config_base').doc(h).get({source:'cache'})
+    ]));
+
     const gts={}, hst={};
     snapG.forEach(d=>{ gts[d.id]=d.data(); });
     snapH.forEach(d=>{ hst[d.id]=d.data(); });
@@ -1661,17 +1666,14 @@ function render() {
     });
 
     Object.values(hst).forEach(f=>{ if(f.f===h) hist.push({name:f.nombre,amt:0,time:f.t,type:'fin'}); });
-
     list.sort((a,b)=>{ if(a.vencido!==b.vencido) return b.vencido-a.vencido; return sortAsc?a.nombre.localeCompare(b.nombre):b.nombre.localeCompare(a.nombre); });
 
-    // Balance card
     document.getElementById('bc-total').textContent=cur(salC);
     document.getElementById('bc-sub').textContent=`${list.length} clientes para ${DAY}`;
     document.getElementById('bc-cap').textContent=cur(capC);
     document.getElementById('bc-int').textContent=cur(salC-capC);
     document.getElementById('bc-hoy').textContent=cur(rHoy);
 
-    // Client list
     const cont=document.getElementById('ruta-list');
     cont.innerHTML='';
     if(!list.length){
@@ -1717,7 +1719,6 @@ function render() {
       });
     }
 
-    // Historial del día
     hist.sort((a,b)=>sortHistNew?b.time-a.time:a.time-b.time);
     const hEl=document.getElementById('hist-list');
     hEl.innerHTML=hist.length?hist.map(i=>`
@@ -1730,8 +1731,6 @@ function render() {
       </div>`).join(''):'<div class="empty"><i class="fa-regular fa-clock"></i><p>Sin movimientos hoy</p></div>';
 
     Object.values(gts).forEach(g=>{ if(g.f===h) gHoy+=g.m; });
-
-    // Stats
     document.getElementById('st-cap').textContent=cur(capC);
     document.getElementById('st-int').textContent=cur(salC-capC);
     document.getElementById('st-hoy').textContent=cur(rHoy);
@@ -1740,22 +1739,18 @@ function render() {
     document.getElementById('cj-rec').textContent=cur(rHoy);
     document.getElementById('cj-out').textContent=cur(gHoy+nHoy);
     document.getElementById('cj-total').textContent=cur(base+rHoy-(gHoy+nHoy));
-
-    // Charts y notificaciones
     if(ME?.role==='boss'){ updateCharts(cls, gts); checkNotifications(cls); }
   }
 
-  // Sin internet: leer directamente del caché de Firestore
-  if(!navigator.onLine){
-    fdb.collection('clientes').get({source:'cache'})
-      .then(snap => procesarDatos(snap))
-      .catch(()=>{});
-  }
+  // Siempre leer del caché primero — aparece inmediatamente sin importar si hay internet
+  fdb.collection('clientes').get({source:'cache'})
+    .then(snap=>procesarDatos(snap))
+    .catch(()=>{});
 
-  // Con internet O sin internet: onSnapshot para actualizaciones en tiempo real
+  // Listener en tiempo real — actualiza cuando hay internet
   dbOff = fdb.collection('clientes').onSnapshot(
-    async snap => { await procesarDatos(snap); },
-    ()=>{ /* sin internet, ya se manejó arriba */ }
+    snap=>procesarDatos(snap),
+    ()=>{}
   );
 }
 
