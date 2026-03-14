@@ -1649,6 +1649,28 @@ function render() {
     snapH.forEach(d=>{ hst[d.id]=d.data(); });
     const base = snapB.exists ? (snapB.data().value||0) : 0;
     allGastos = gts;
+    mostrarDatos(allCls, gts, hst, base, h, q);
+  }
+
+  // Siempre leer del caché primero
+  fdb.collection('clientes').get({source:'cache'})
+    .then(snap=>procesarDatos(snap))
+    .catch(()=>{});
+
+  // Listener en tiempo real
+  dbOff = fdb.collection('clientes').onSnapshot(
+    snap=>procesarDatos(snap),
+    ()=>{}
+  );
+}
+
+// Mostrar datos usando allCls actual sin releer Firestore
+function renderLocal() {
+  const h=today(), q=(document.getElementById('search-inp')?.value||'').toLowerCase();
+  mostrarDatos(allCls, allGastos, {}, 0, h, q);
+}
+
+function mostrarDatos(cls, gts, hst, base, h, q) {
 
     let rHoy=0, gHoy=0, nHoy=0, capC=0, salC=0;
     let list=[], hist=[];
@@ -1740,18 +1762,6 @@ function render() {
     document.getElementById('cj-out').textContent=cur(gHoy+nHoy);
     document.getElementById('cj-total').textContent=cur(base+rHoy-(gHoy+nHoy));
     if(ME?.role==='boss'){ updateCharts(cls, gts); checkNotifications(cls); }
-  }
-
-  // Siempre leer del caché primero — aparece inmediatamente sin importar si hay internet
-  fdb.collection('clientes').get({source:'cache'})
-    .then(snap=>procesarDatos(snap))
-    .catch(()=>{});
-
-  // Listener en tiempo real — actualiza cuando hay internet
-  dbOff = fdb.collection('clientes').onSnapshot(
-    snap=>procesarDatos(snap),
-    ()=>{}
-  );
 }
 
 /* ═══════════════════════════════════════════════
@@ -1793,11 +1803,11 @@ function confirmCobro(){
     fdb.collection('historial_finalizados').add({nombre:c.nombre,f:h,t:ts,capital_orig:c.capital,total_cobrado:c.capital*1.2});
     fdb.collection('clientes').doc(String(sId)).delete();
     delete allCls[sId];
-    render();
+    renderLocal();
     if(confirm('✅ Pagó todo. ¿Renovar préstamo?')) renewCliente(c?.nombre||'',c?.barrio||'');
   } else {
     toast(`✅ Cobro registrado: ${cur(v)}`);
-    render();
+    renderLocal();
   }
 }
 
@@ -1812,7 +1822,7 @@ function confirmAmp(){
   const nS=(sSal+plus)*(1+i);
   fdb.collection('clientes').doc(String(sId)).update({saldo:nS,capital:sCap+plus,cuota:Math.ceil(nS/d),plazo:d});
   if(allCls[sId]){allCls[sId].saldo=nS;allCls[sId].capital=sCap+plus;allCls[sId].cuota=Math.ceil(nS/d);allCls[sId].plazo=d;}
-  closeSheet(); toast('📈 Refinanciado correctamente'); render();
+  closeSheet(); toast("📈 Refinanciado correctamente"); renderLocal();
 }
 
 /* ═══════════════════════════════════════════════
@@ -1836,7 +1846,7 @@ function saveCliente(){
   ['n-name','n-barrio','n-tel'].forEach(x=>{const el=document.getElementById(x);if(el)el.value='';});
   goTab('ruta',document.getElementById('dtab-ruta'));
   toast(`✅ ${n} activado`);
-  render();
+  renderLocal();
 }
 function renewCliente(n,b){
   if(ME?.role!=='boss'){toast('⛔ Sin permiso');return;}
@@ -1848,7 +1858,7 @@ function delCliente(id){
   if(!confirm('¿Eliminar este cliente?'))return;
   fdb.collection('clientes').doc(String(id)).delete();
   delete allCls[id];
-  toast('🗑 Cliente eliminado'); render();
+  toast('🗑 Cliente eliminado'); renderLocal();
 }
 
 /* ═══════════════════════════════════════════════
@@ -1863,7 +1873,7 @@ function saveGasto(){
   allGastos[key]={f:today(),d:d||'Sin descripción',m};
   document.getElementById('g-desc').value='';
   document.getElementById('g-monto').value='';
-  toast('💸 Gasto registrado'); render();
+  toast('💸 Gasto registrado'); renderLocal();
 }
 
 /* ═══════════════════════════════════════════════
