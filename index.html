@@ -1198,13 +1198,16 @@ body {
           <div class="fgroup"><label class="form-label">Capital ($)</label><input class="form-input" type="number" id="n-capital" placeholder="500000"></div>
           <div class="fgroup"><label class="form-label">Interés %</label><input class="form-input" type="number" id="n-int" value="20"></div>
         </div>
-        <div class="grid2">
-          <div class="fgroup"><label class="form-label">Plazo (días)</label><input class="form-input" type="number" id="n-plazo" value="24"></div>
-          <div class="fgroup"><label class="form-label">Día de cobro</label>
-            <select class="form-input form-select" id="n-dia">
-              <option>Lunes</option><option>Martes</option><option>Miercoles</option>
-              <option>Jueves</option><option>Viernes</option><option>Sabado</option><option>Domingo</option>
-            </select>
+        <div class="fgroup"><label class="form-label">Plazo (días)</label><input class="form-input" type="number" id="n-plazo" value="24"></div>
+        <div class="fgroup"><label class="form-label">Día(s) de cobro (puede elegir varios)</label>
+          <div class="dias-check-grid" id="n-dias-wrap">
+            <label class="dia-chk"><input type="checkbox" value="Lunes"><span>Lun</span></label>
+            <label class="dia-chk"><input type="checkbox" value="Martes"><span>Mar</span></label>
+            <label class="dia-chk"><input type="checkbox" value="Miercoles"><span>Mié</span></label>
+            <label class="dia-chk"><input type="checkbox" value="Jueves"><span>Jue</span></label>
+            <label class="dia-chk"><input type="checkbox" value="Viernes"><span>Vie</span></label>
+            <label class="dia-chk"><input type="checkbox" value="Sabado"><span>Sáb</span></label>
+            <label class="dia-chk"><input type="checkbox" value="Domingo"><span>Dom</span></label>
           </div>
         </div>
         <div class="fgroup"><label class="form-label">Barrio / Dirección</label><input class="form-input" type="text" id="n-barrio" placeholder="Ej: La Victoria"></div>
@@ -1683,7 +1686,9 @@ function mostrarDatos(cls, gts, hst, base, h, q) {
       if(c.f_crea===h) nHoy+=+c.capital||0;
       const diff=Math.floor((Date.now()-new Date(c.f_crea))/86400000);
       const venc=diff>c.plazo&&c.saldo>0;
-      if(c.saldo>0&&c.dia===DAY&&(c.nombre.toLowerCase().includes(q)||(c.barrio||'').toLowerCase().includes(q)))
+      // Soporte multi-día: usar c.dias (array) si existe, sino caer en c.dia
+      const cDias=Array.isArray(c.dias)&&c.dias.length>0 ? c.dias : [c.dia];
+      if(c.saldo>0&&cDias.includes(DAY)&&(c.nombre.toLowerCase().includes(q)||(c.barrio||'').toLowerCase().includes(q)))
         list.push({...c,vencido:venc});
     });
 
@@ -1835,17 +1840,22 @@ function saveCliente(){
   const i=parseFloat(document.getElementById('n-int').value)/100;
   const d=parseFloat(document.getElementById('n-plazo').value);
   const b=document.getElementById('n-barrio').value.trim();
-  const dia=document.getElementById('n-dia').value;
+  // Leer días seleccionados (multi-selección)
+  const diasSel=[...document.querySelectorAll('#n-dias-wrap input:checked')].map(cb=>cb.value);
+  if(diasSel.length===0){toast('⚠️ Selecciona al menos un día de cobro');return;}
+  const dia=diasSel[0]; // día principal (compatibilidad)
   const tel=(document.getElementById('n-tel')?.value||'').trim();
   if(!n||!m){toast('⚠️ Completa nombre y capital');return;}
   const id=Date.now(), h=today(), t=m*(1+i);
-  const data={id,nombre:n,capital:m,saldo:t,cuota:Math.ceil(t/d),dia,barrio:b,f_crea:h,u_f:'',plazo:d};
+  const data={id,nombre:n,capital:m,saldo:t,cuota:Math.ceil(t/d),dia,dias:diasSel,barrio:b,f_crea:h,u_f:'',plazo:d};
   if(tel) data.telefono=tel;
   fdb.collection('clientes').doc(String(id)).set(data);
   allCls[id]=data;
   ['n-name','n-barrio','n-tel'].forEach(x=>{const el=document.getElementById(x);if(el)el.value='';});
+  // Limpiar checkboxes
+  document.querySelectorAll('#n-dias-wrap input').forEach(cb=>cb.checked=false);
   goTab('ruta',document.getElementById('dtab-ruta'));
-  toast(`✅ ${n} activado`);
+  toast(`✅ ${n} activado — Días: ${diasSel.join(', ')}`);
   renderLocal();
 }
 function renewCliente(n,b){
@@ -2104,7 +2114,10 @@ function updateCharts(cls,gts){
   Object.values(cls).forEach(c=>{ if(!c.pagos)return; Object.values(c.pagos).forEach(p=>{ const da=Math.floor((Date.now()-p.t)/86400000); if(da>=0&&da<14) recaudo14[13-da]+=p.m; }); });
   chartR.data.datasets[0].data=recaudo14; chartR.update('none');
   const dias7=['Lunes','Martes','Miercoles','Jueves','Viernes','Sabado','Domingo'];
-  chartD.data.datasets[0].data=dias7.map(d=>Object.values(cls).filter(c=>c.dia===d&&c.saldo>0).length); chartD.update('none');
+  chartD.data.datasets[0].data=dias7.map(d=>Object.values(cls).filter(c=>{
+    const cDias=Array.isArray(c.dias)&&c.dias.length>0?c.dias:[c.dia];
+    return cDias.includes(d)&&c.saldo>0;
+  }).length); chartD.update('none');
   let alDia=0,venc=0;
   Object.values(cls).forEach(c=>{ if(c.saldo<=0)return; const diff=Math.floor((Date.now()-new Date(c.f_crea))/86400000); diff>c.plazo?venc++:alDia++; });
   chartE.data.datasets[0].data=[alDia,venc]; chartE.update('none');
