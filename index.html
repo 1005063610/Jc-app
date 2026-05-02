@@ -1211,6 +1211,7 @@ body {
           </div>
         </div>
         <div class="fgroup"><label class="form-label">Barrio / Dirección</label><input class="form-input" type="text" id="n-barrio" placeholder="Ej: La Victoria"></div>
+        <div class="fgroup"><label class="form-label">Teléfono WhatsApp (opcional)</label><input class="form-input" type="tel" id="n-tel" placeholder="Ej: 3001234567"></div>
         <button class="btn-act primary" onclick="saveCliente()">✅ Activar cliente</button>
       </div>
     </div>
@@ -1379,7 +1380,27 @@ const fdb = firebase.firestore();
 const rtdb = firebase.database();
 
 // OFFLINE REAL — guarda en disco, sincroniza cuando vuelve internet
-fdb.enablePersistence({synchronizeTabs:true}).catch(()=>{});
+let persistenceReady = false;
+fdb.enablePersistence({synchronizeTabs:true})
+  .then(()=>{ persistenceReady=true; })
+  .catch(()=>{ persistenceReady=true; }); // aunque falle, dejar continuar
+
+// Sincronizar clientes pendientes del localStorage cuando vuelve internet
+window.addEventListener('online', ()=>{
+  try{
+    const pendientes=JSON.parse(localStorage.getItem('jc_pendientes_clientes')||'[]');
+    if(!pendientes.length) return;
+    toast('🔄 Sincronizando datos pendientes…');
+    const batch=fdb.batch();
+    pendientes.forEach(data=>{
+      batch.set(fdb.collection('clientes').doc(String(data.id)), data);
+    });
+    batch.commit().then(()=>{
+      localStorage.removeItem('jc_pendientes_clientes');
+      toast('✅ Datos sincronizados con el servidor');
+    }).catch(()=>{});
+  }catch(e){}
+});
 
 /* ═══════════════════════════════════════════════
    MIGRACIÓN AUTOMÁTICA: RTDB → FIRESTORE
@@ -1480,6 +1501,10 @@ async function doLogin() {
   if (loginMode==='boss') {
     const pin = document.getElementById('boss-pin').value.trim();
     if (pin!==_PIN){ showErr('PIN incorrecto'); return; }
+    // Esperar a que Firestore persistence esté lista (máx 2s)
+    if(!persistenceReady){
+      await new Promise(res=>{ const t=Date.now(); const chk=setInterval(()=>{ if(persistenceReady||(Date.now()-t>2000)){clearInterval(chk);res();}},50); });
+    }
     ME = {role:'boss', name:'JC', dia:null, id:'boss'};
     startApp();
   } else {
@@ -1562,13 +1587,6 @@ function startApp() {
     if(av) av.textContent=initials; if(nm) nm.textContent=ME.name;
     const roleLabel=document.querySelector('.mob-drawer-user > div > div:last-child');
     if(roleLabel) roleLabel.textContent='COBRADOR';
-  }
-
-  // Agregar campo teléfono al formulario
-  const nForm=document.getElementById('pane-nuevo');
-  if(nForm && !document.getElementById('n-tel')){
-    const bg=nForm.querySelector('.fgroup:last-of-type');
-    if(bg){ const tg=document.createElement('div'); tg.className='fgroup'; tg.innerHTML='<label class="form-label">Teléfono WhatsApp (opcional)</label><input class="form-input" type="tel" id="n-tel" placeholder="Ej: 3001234567">'; bg.parentNode.insertBefore(tg,bg.nextSibling); }
   }
 
   render();
@@ -1840,19 +1858,32 @@ function saveCliente(){
   const i=parseFloat(document.getElementById('n-int').value)/100;
   const d=parseFloat(document.getElementById('n-plazo').value);
   const b=document.getElementById('n-barrio').value.trim();
-  // Leer días seleccionados (multi-selección)
   const diasSel=[...document.querySelectorAll('#n-dias-wrap input:checked')].map(cb=>cb.value);
   if(diasSel.length===0){toast('⚠️ Selecciona al menos un día de cobro');return;}
-  const dia=diasSel[0]; // día principal (compatibilidad)
+  const dia=diasSel[0];
   const tel=(document.getElementById('n-tel')?.value||'').trim();
   if(!n||!m){toast('⚠️ Completa nombre y capital');return;}
   const id=Date.now(), h=today(), t=m*(1+i);
   const data={id,nombre:n,capital:m,saldo:t,cuota:Math.ceil(t/d),dia,dias:diasSel,barrio:b,f_crea:h,u_f:'',plazo:d};
   if(tel) data.telefono=tel;
-  fdb.collection('clientes').doc(String(id)).set(data);
+
+  // Guardar en Firestore (funciona online y offline con persistence)
+  fdb.collection('clientes').doc(String(id)).set(data).catch(err=>{
+    // Si Firestore falla (persistence no lista), guardar en localStorage para sincronizar después
+    console.warn('Firestore write failed, saving to localStorage:', err);
+    try{
+      const pendientes=JSON.parse(localStorage.getItem('jc_pendientes_clientes')||'[]');
+      pendientes.push(data);
+      localStorage.setItem('jc_pendientes_clientes', JSON.stringify(pendientes));
+    }catch(e){}
+  });
+
+  // Actualizar memoria local inmediatamente
   allCls[id]=data;
+
+  // Limpiar formulario
   ['n-name','n-barrio','n-tel'].forEach(x=>{const el=document.getElementById(x);if(el)el.value='';});
-  // Limpiar checkboxes
+  document.getElementById('n-capital').value='';
   document.querySelectorAll('#n-dias-wrap input').forEach(cb=>cb.checked=false);
   goTab('ruta',document.getElementById('dtab-ruta'));
   toast(`✅ ${n} activado — Días: ${diasSel.join(', ')}`);
@@ -1921,20 +1952,21 @@ async function saveCollector(){
   if(!name||!user||!pass){toast('⚠️ Completa todos los campos');return;}
   if(!dias.length){toast('⚠️ Selecciona al menos un día');return;}
 
-  // Verificar duplicado en caché local primero, luego online si hay conexión
   const nuevoCol={nombre:name,usuario:user,password:pass,dia:dias[0],dias,bloqueado:false,creado:Date.now()};
 
+  // Verificar duplicado
   if(navigator.onLine){
     try{
       const snap=await fdb.collection('cobradores').where('usuario','==',user).get();
       if(!snap.empty){toast('⚠️ Ese usuario ya existe');return;}
     }catch(e){
-      // Sin conexión real, verificar en caché
-      const snapC=await fdb.collection('cobradores').get({source:'cache'}).catch(()=>null);
-      if(snapC){ let dup=false; snapC.forEach(d=>{if(d.data().usuario===user)dup=true;}); if(dup){toast('⚠️ Ese usuario ya existe');return;} }
+      try{
+        const snapC=await fdb.collection('cobradores').get({source:'cache'});
+        let dup=false; snapC.forEach(d=>{if(d.data().usuario===user)dup=true;});
+        if(dup){toast('⚠️ Ese usuario ya existe');return;}
+      }catch(e2){}
     }
   } else {
-    // Modo offline: verificar en caché
     try{
       const snapC=await fdb.collection('cobradores').get({source:'cache'});
       let dup=false; snapC.forEach(d=>{if(d.data().usuario===user)dup=true;});
@@ -1942,12 +1974,11 @@ async function saveCollector(){
     }catch(e){}
   }
 
-  // Guardar — funciona online y offline (Firestore persistence)
-  const docRef=fdb.collection('cobradores').doc(String(Date.now()));
-  docRef.set(nuevoCol);
+  const docId=String(Date.now());
+  fdb.collection('cobradores').doc(docId).set(nuevoCol).catch(()=>{});
 
-  // Guardar en localStorage para login offline
-  try{ localStorage.setItem('jc_col_'+user, JSON.stringify({id:docRef.id,col:nuevoCol})); }catch(e){}
+  // Guardar siempre en localStorage para login offline
+  try{ localStorage.setItem('jc_col_'+user, JSON.stringify({id:docId,col:nuevoCol})); }catch(e){}
 
   ['t-name','t-user','t-pass'].forEach(x=>document.getElementById(x).value='');
   document.querySelectorAll('#t-dias-wrap input').forEach(c=>c.checked=false);
@@ -1961,7 +1992,6 @@ async function loadTeam(){
     const snap=await fdb.collection('cobradores').get({source:src});
     snap.forEach(d=>{ data[d.id]=d.data(); });
   }catch(e){
-    // fallback a caché
     try{
       const snap=await fdb.collection('cobradores').get({source:'cache'});
       snap.forEach(d=>{ data[d.id]=d.data(); });
@@ -1988,19 +2018,18 @@ async function loadTeam(){
 }
 async function toggleBlock(id,block){
   if(ME?.role!=='boss'){toast('⛔ Sin permiso');return;}
-  fdb.collection('cobradores').doc(id).update({bloqueado:block});
-  toast(block?'🔒 Cobrador bloqueado':'🔓 Cobrador desbloqueado');
-  // Actualizar localStorage si existe
+  fdb.collection('cobradores').doc(id).update({bloqueado:block}).catch(()=>{});
   try{
     const keys=Object.keys(localStorage).filter(k=>k.startsWith('jc_col_'));
     keys.forEach(k=>{try{const obj=JSON.parse(localStorage.getItem(k));if(obj.id===id){obj.col.bloqueado=block;localStorage.setItem(k,JSON.stringify(obj));}}catch(e){}});
   }catch(e){}
+  toast(block?'🔒 Cobrador bloqueado':'🔓 Cobrador desbloqueado');
   loadTeam();
 }
 async function removeCollector(id,name){
   if(ME?.role!=='boss'){toast('⛔ Sin permiso');return;}
   if(!confirm(`¿Eliminar a ${name}?`))return;
-  fdb.collection('cobradores').doc(id).delete();
+  fdb.collection('cobradores').doc(id).delete().catch(()=>{});
   toast('🗑 Cobrador eliminado'); loadTeam();
 }
 
