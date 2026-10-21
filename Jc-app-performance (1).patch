@@ -1,0 +1,107 @@
+From 502c26daf5155ea91d4901d6d9ff1d7e1ffcf3c9 Mon Sep 17 00:00:00 2001
+From: 1005063610 <9.1901128e+07+1005063610@users.noreply.github.com>
+Date: Wed, 21 Oct 2026 04:10:34 +0000
+Subject: [PATCH] perf: lazy load optional app dependencies
+
+---
+ index.html | 39 +++++++++++++++++++++++++++------------
+ 1 file changed, 27 insertions(+), 12 deletions(-)
+
+diff --git a/index.html b/index.html
+index 330a79e..cc114f4 100644
+--- a/index.html
++++ b/index.html
+@@ -9,11 +9,9 @@
+ <meta name="apple-mobile-web-app-capable" content="yes">
+ <meta name="apple-mobile-web-app-title" content="JC Supreme">
+ <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+ <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
++<link rel="preconnect" href="https://www.gstatic.com">
++<link rel="preconnect" href="https://cdnjs.cloudflare.com">
+ <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+ <style>
+@@ -1377,7 +1375,21 @@ firebase.initializeApp({
+ });
+ 
+ const fdb = firebase.firestore();
+-const rtdb = firebase.database();
++let rtdb = null;
++
++function loadScript(src) {
++  return new Promise((resolve, reject) => {
++    const existing = document.querySelector(`script[src="${src}"]`);
++    if (existing) {
++      if (existing.dataset.loaded === 'true') { resolve(); return; }
++      existing.addEventListener('load', resolve, {once:true}); existing.addEventListener('error', reject, {once:true}); return;
++    }
++    const script = document.createElement('script');
++    script.src = src; script.async = true;
++    script.onload = () => { script.dataset.loaded = 'true'; resolve(); }; script.onerror = reject;
++    document.head.appendChild(script);
++  });
++}
+ 
+ // OFFLINE REAL — guarda en disco, sincroniza cuando vuelve internet
+ let persistenceReady = false;
+@@ -1412,6 +1424,8 @@ async function migrarDatos() {
+   try {
+     const check = await fdb.collection('clientes').limit(1).get();
+     if(!check.empty){ localStorage.setItem('jc_migrado_v1','1'); return; }
++    await loadScript('https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js');
++    rtdb = firebase.database();
+     const snap = await rtdb.ref('jc_v130').once('value');
+     const data = snap.val();
+     if(!data){ localStorage.setItem('jc_migrado_v1','1'); return; }
+@@ -1501,10 +1515,6 @@ async function doLogin() {
+   if (loginMode==='boss') {
+     const pin = document.getElementById('boss-pin').value.trim();
+     if (pin!==_PIN){ showErr('PIN incorrecto'); return; }
+-    // Esperar a que Firestore persistence esté lista (máx 2s)
+-    if(!persistenceReady){
+-      await new Promise(res=>{ const t=Date.now(); const chk=setInterval(()=>{ if(persistenceReady||(Date.now()-t>2000)){clearInterval(chk);res();}},50); });
+-    }
+     ME = {role:'boss', name:'JC', dia:null, id:'boss'};
+     startApp();
+   } else {
+@@ -2118,6 +2128,8 @@ async function exportPDF(){
+   const btn=document.getElementById('pdf-btn');
+   btn.textContent='Generando…'; btn.disabled=true;
+   try{
++    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
++    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js');
+     const {jsPDF}=window.jspdf;
+     const doc=new jsPDF();
+     const range=parseInt(document.getElementById('pdf-range').value);
+@@ -2166,8 +2178,10 @@ window.addEventListener('beforeunload',stopCollectorGPS);
+    NIVEL 2 — GRÁFICAS
+ ═══════════════════════════════════════════════ */
+ let chartsBuilt=false, chartR=null, chartD=null, chartE=null, chartC=null;
+-function buildCharts(){
+-  if(chartsBuilt) return; chartsBuilt=true;
++async function buildCharts(){
++  if(chartsBuilt) return;
++  try { await loadScript('https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js'); }
++  catch(e) { return; }
+   const opts={responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:'#8892b0',font:{family:'Nunito',size:11}}}}};
+   const gridColor='rgba(255,255,255,0.05)';
+   const scalesOpt={x:{ticks:{color:'#8892b0',font:{size:10}},grid:{color:gridColor}},y:{ticks:{color:'#8892b0',font:{size:10}},grid:{color:gridColor}}};
+@@ -2176,9 +2190,10 @@ function buildCharts(){
+   chartD=new Chart(document.getElementById('chart-dias'),{type:'doughnut',data:{labels:['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'],datasets:[{data:[0,0,0,0,0,0,0],backgroundColor:['#4f6ef7','#7c3aed','#10b981','#f59e0b','#ef4444','#06b6d4','#ec4899'],borderWidth:0}]},options:{...opts,cutout:'65%'}});
+   chartE=new Chart(document.getElementById('chart-estado'),{type:'doughnut',data:{labels:['Al día','Vencidos'],datasets:[{data:[0,0],backgroundColor:['#10b981','#ef4444'],borderWidth:0}]},options:{...opts,cutout:'65%'}});
+   chartC=new Chart(document.getElementById('chart-cap'),{type:'bar',data:{labels:['Capital','Interés esperado','Cobrado hoy'],datasets:[{data:[0,0,0],backgroundColor:['rgba(79,110,247,.6)','rgba(245,158,11,.6)','rgba(16,185,129,.6)'],borderRadius:8,borderWidth:0}]},options:{...opts,plugins:{...opts.plugins,legend:{display:false}},scales:scalesOpt,indexAxis:'y'}});
++  chartsBuilt=true;
+ }
+ function updateCharts(cls,gts){
+-  if(!chartsBuilt) return;
++  if(!chartsBuilt || !chartR || !chartD || !chartE || !chartC) return;
+   const recaudo14=Array(14).fill(0);
+   Object.values(cls).forEach(c=>{ if(!c.pagos)return; Object.values(c.pagos).forEach(p=>{ const da=Math.floor((Date.now()-p.t)/86400000); if(da>=0&&da<14) recaudo14[13-da]+=p.m; }); });
+   chartR.data.datasets[0].data=recaudo14; chartR.update('none');
+-- 
+2.43.0
+
