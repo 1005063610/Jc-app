@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function owns(data) { return signedIn() && data.ownerId == request.auth.uid; }
+
+    // Perfil opcional: Google puede entrar aunque todavía no exista users/{uid}.
+    match /users/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow create, update: if signedIn() && request.auth.uid == uid;
+      allow delete: if false;
+    }
+
+    match /clients/{id} {
+      allow read: if owns(resource.data) ||
+        (signedIn() && 'assignedTo' in resource.data && request.auth.uid in resource.data.assignedTo);
+      allow create: if owns(request.resource.data);
+      allow update: if
+        (owns(resource.data) ||
+          (signedIn() && 'assignedTo' in resource.data && request.auth.uid in resource.data.assignedTo)) &&
+        request.resource.data.ownerId == resource.data.ownerId;
+      allow delete: if owns(resource.data);
+    }
+
+    match /expenses/{id} {
+      allow read: if owns(resource.data);
+      allow create: if owns(request.resource.data);
+      allow update, delete: if owns(resource.data);
+    }
+
+    match /payments/{id} {
+      allow read: if owns(resource.data);
+      allow create: if owns(request.resource.data);
+      allow update, delete: if false;
+    }
+
+    match /gps_live/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow create, update: if signedIn() && request.auth.uid == uid;
+      allow delete: if signedIn() && request.auth.uid == uid;
+    }
+
+    match /{document=**} { allow read, write: if false; }
+  }
+}
